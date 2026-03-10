@@ -1,0 +1,75 @@
+/* Upload drop zone */
+.drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: #0d6efd;
+    background-color: #f0f7ff;
+}
+
+/* Severity badge colors */
+.severity-warning {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+/* Issue table */
+#issues-tbody tr {
+    font-size: 0.875rem;
+}
+
+#issues-tbody code {
+    font-size: 0.8rem;
+}
+
+/* Chart containers */
+#chart-by-query {
+    max-height: 350px;
+}
+
+#chart-severity {
+    max-height: 250px;
+    max-width: 250px;
+}
+
+#chart-by-product-type {
+    max-height: 300px;
+}
+
+/* Card hover effect */
+.card.shadow-sm {
+    transition: box-shadow 0.2s;
+}
+
+.card.shadow-sm:hover {
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .1) !important;
+}
+
+/* Pagination active state */
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Table row link styling */
+.table a.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
+
+/* Summary cards */
+.card .fs-2 {
+    line-height: 1.2;
+}
+
+/* Compare delta colors */
+.text-danger.fw-bold {
+    font-weight: 600 !important;
+}
+.text-success.fw-bold {
+    font-weight: 600 !important;
+}

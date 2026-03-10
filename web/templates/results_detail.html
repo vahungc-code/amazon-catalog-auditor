@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result.query_name }} - {{ scan.filename }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('scan.view_results', scan_id=scan.id) }}">Scan Results</a></li>
+        <li class="breadcrumb-item active">{{ result.query_name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>{{ result.query_name }}</h2>
+        <p class="text-muted">{{ result.query_description }}</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-danger fs-6">{{ total_issues }} issues</span>
+        <br><small class="text-muted">{{ result.affected_skus }} affected SKUs</small>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:70px">Row</th>
+                    <th style="width:150px">SKU</th>
+                    <th style="width:180px">Field</th>
+                    <th style="width:100px">Severity</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in issues %}
+                <tr>
+                    <td>{{ issue.get('row', '') }}</td>
+                    <td><code>{{ issue.get('sku', '') }}</code></td>
+                    <td>{{ issue.get('field', '') }}</td>
+                    <td>
+                        {% set sev = issue.get('severity', 'info') %}
+                        {% if sev == 'required' %}
+                            <span class="badge bg-danger">required</span>
+                        {% elif sev == 'conditional' %}
+                            <span class="badge bg-warning text-dark">conditional</span>
+                        {% elif sev == 'warning' %}
+                            <span class="badge severity-warning">warning</span>
+                        {% else %}
+                            <span class="badge bg-info">info</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ issue.get('details', '') }}</small></td>
+                </tr>
+                {% endfor %}
+                {% if not issues %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">No issues found.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                    {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                        <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                    {% elif p == 4 or p == total_pages - 3 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('scan.view_results', scan_id=scan.id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Results
+    </a>
+</div>
+{% endblock %}

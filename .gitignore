@@ -1,0 +1,14 @@
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+*.xlsx
+*.xlsm
+*.csv
+venv/
+.venv/
+instance/
+.DS_Store
+.claude/
