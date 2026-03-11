@@ -12,7 +12,12 @@ CREATE TABLE IF NOT EXISTS scans (
     total_affected  INTEGER NOT NULL DEFAULT 0,
     queries_run     TEXT NOT NULL DEFAULT '[]',
     status          TEXT NOT NULL DEFAULT 'completed',
-    error_message   TEXT
+    error_message   TEXT,
+    payment_status  TEXT NOT NULL DEFAULT 'free',
+    stripe_session_id TEXT,
+    stripe_payment_intent TEXT,
+    headers_json    TEXT NOT NULL DEFAULT '{}',
+    sku_names_json  TEXT NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS scan_results (
@@ -31,6 +36,14 @@ CREATE TABLE IF NOT EXISTS scan_results (
 CREATE INDEX IF NOT EXISTS idx_scan_results_scan_id ON scan_results(scan_id);
 CREATE INDEX IF NOT EXISTS idx_scans_created_at ON scans(created_at);
 """
+
+MIGRATIONS = [
+    "ALTER TABLE scans ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'free'",
+    "ALTER TABLE scans ADD COLUMN stripe_session_id TEXT",
+    "ALTER TABLE scans ADD COLUMN stripe_payment_intent TEXT",
+    "ALTER TABLE scans ADD COLUMN headers_json TEXT NOT NULL DEFAULT '{}'",
+    "ALTER TABLE scans ADD COLUMN sku_names_json TEXT NOT NULL DEFAULT '{}'",
+]
 
 
 def get_db():
@@ -55,5 +68,11 @@ def init_db(app):
     with app.app_context():
         db = sqlite3.connect(app.config['DATABASE_PATH'])
         db.executescript(SCHEMA)
+        # Run migrations for existing databases
+        for migration in MIGRATIONS:
+            try:
+                db.execute(migration)
+            except sqlite3.OperationalError:
+                pass  # Column already exists
         db.commit()
         db.close()

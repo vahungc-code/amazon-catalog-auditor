@@ -57,6 +57,16 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
     all_listings = parser.get_listings(skip_parents=False, skip_examples=True, skip_fbm_duplicates=False)
     total_listings = len(all_listings)
 
+    # Build SKU → title map for product name display
+    sku_names = {}
+    for listing in all_listings:
+        if listing.sku:
+            sku_names[listing.sku] = listing.title or listing.sku
+
+    # Serialize parser headers for flat-file column letter lookup
+    headers_json = json.dumps(parser.headers)
+    sku_names_json = json.dumps(sku_names)
+
     results = engine.execute_all()
 
     db = get_db()
@@ -75,10 +85,11 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
     cursor = db.execute(
         """INSERT INTO scans
            (filename, file_hash, total_listings, total_issues,
-            total_affected, queries_run, status)
-           VALUES (?, ?, ?, ?, ?, ?, 'completed')""",
+            total_affected, queries_run, status, headers_json, sku_names_json)
+           VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?)""",
         (original_filename, file_hash, total_listings,
-         total_issues, total_affected, json.dumps(queries_run))
+         total_issues, total_affected, json.dumps(queries_run),
+         headers_json, sku_names_json)
     )
     scan_id = cursor.lastrowid
 

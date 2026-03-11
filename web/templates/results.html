@@ -1,188 +1,264 @@
 {% extends "base.html" %}
 
-{% block title %}Results - {{ scan.filename }}{% endblock %}
+{% block title %}Results — {{ scan.filename }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">Scan Results</h2>
-        <p class="text-muted mb-0">
-            <i class="bi bi-file-earmark-spreadsheet"></i> {{ scan.filename }}
-            <span class="ms-2 text-muted small">{{ scan.created_at }}</span>
-        </p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ url_for('api.export_json', scan_id=scan.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-filetype-json"></i> Export JSON
-        </a>
-        <a href="{{ url_for('api.export_csv', scan_id=scan.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-filetype-csv"></i> Export CSV
-        </a>
-    </div>
-</div>
+<div id="results-app"
+     data-scan-id="{{ scan.id }}"
+     data-payment-status="{{ payment_status }}"
+     data-filename="{{ scan.filename }}"
+     data-created-at="{{ scan.created_at }}">
 
-<!-- Summary Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="fs-2 fw-bold text-primary">{{ scan.total_listings }}</div>
-                <small class="text-muted">Total Listings</small>
-            </div>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="fw-800" style="font-size: 1.5rem;">Scan Results</h2>
+            <p class="text-muted-custom mb-0" style="font-size: 0.85rem;">
+                <i class="bi bi-file-earmark-spreadsheet text-accent"></i>
+                {{ scan.filename }}
+                <span class="text-dim mx-2">|</span>
+                {{ scan.created_at }}
+            </p>
+        </div>
+        <div class="d-flex gap-sm" id="export-buttons">
+            {% if payment_status == 'paid' %}
+            <a href="{{ url_for('api.export_json', scan_id=scan.id) }}" class="btn-ghost">
+                <i class="bi bi-filetype-json"></i> JSON
+            </a>
+            <a href="{{ url_for('api.export_csv', scan_id=scan.id) }}" class="btn-ghost">
+                <i class="bi bi-filetype-csv"></i> CSV
+            </a>
+            {% else %}
+            <span class="btn-ghost" style="opacity: 0.4; cursor: default;" title="Unlock to export">
+                <i class="bi bi-lock"></i> Export
+            </span>
+            {% endif %}
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="fs-2 fw-bold text-danger">{{ scan.total_issues }}</div>
-                <small class="text-muted">Total Issues</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="fs-2 fw-bold text-warning">{{ scan.total_affected }}</div>
-                <small class="text-muted">Affected SKUs</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="fs-2 fw-bold text-info">{{ queries_run|length }}</div>
-                <small class="text-muted">Queries Run</small>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Charts -->
-<div id="dashboard" data-scan-id="{{ scan.id }}">
-    <div class="row g-3 mb-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm h-100">
-                <div class="card-header"><h6 class="mb-0">Issues by Query</h6></div>
-                <div class="card-body">
-                    <canvas id="chart-by-query"></canvas>
+    <!-- Tabs -->
+    <div class="tabs-custom">
+        <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">
+            <i class="bi bi-grid-1x2 tab-icon"></i> SKU Overview
+        </button>
+        <button class="tab-btn" data-tab="details" onclick="switchTab('details')">
+            <i class="bi bi-table tab-icon"></i> Issue Details
+            {% if payment_status != 'paid' %}
+            <i class="bi bi-lock-fill lock-icon"></i>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- Tab 1: SKU Overview (Free) -->
+    <div class="tab-panel active" id="panel-overview">
+        <div class="spinner-container" id="overview-loading">
+            <div class="spinner"></div>
+        </div>
+        <div id="overview-content" style="display: none;">
+
+            <!-- Health Score + Stats Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 d-flex justify-content-center align-items-center">
+                    <div class="health-ring" id="health-ring">
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <circle class="health-ring-bg" cx="80" cy="80" r="65"/>
+                            <circle class="health-ring-fill" cx="80" cy="80" r="65"
+                                    stroke-dasharray="408.4" stroke-dashoffset="408.4" id="health-fill"/>
+                        </svg>
+                        <div class="health-ring-text">
+                            <div class="health-ring-score" id="health-score">—</div>
+                            <div class="health-ring-label" id="health-label">Loading</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="row g-3">
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card">
+                                <div class="stat-value text-accent" id="stat-listings">—</div>
+                                <div class="stat-label">Total Listings</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning-custom" id="stat-affected">—</div>
+                                <div class="stat-label">Affected SKUs</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card">
+                                <div class="stat-value text-critical" id="stat-critical">—</div>
+                                <div class="stat-label">Critical Issues</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card">
+                                <div class="stat-value" style="color: var(--text);" id="stat-total">—</div>
+                                <div class="stat-label">Total Issues</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity Bar -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2" style="font-size: 0.75rem;">
+                    <span class="text-muted-custom">Issue Distribution</span>
+                    <div class="d-flex gap-md">
+                        <span><span style="color: var(--critical);">&#9679;</span> Critical <span id="sev-critical-count" class="text-dim"></span></span>
+                        <span><span style="color: var(--warning);">&#9679;</span> Warning <span id="sev-warning-count" class="text-dim"></span></span>
+                        <span><span style="color: var(--info);">&#9679;</span> Info <span id="sev-info-count" class="text-dim"></span></span>
+                    </div>
+                </div>
+                <div class="severity-bar" id="severity-bar"></div>
+            </div>
+
+            <!-- Quick Counts -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="quick-count">
+                        <div class="quick-count-icon critical"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div>
+                            <div class="quick-count-value" id="qc-critical">—</div>
+                            <div class="quick-count-label">Critical SKUs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="quick-count">
+                        <div class="quick-count-icon warning"><i class="bi bi-exclamation-circle-fill"></i></div>
+                        <div>
+                            <div class="quick-count-value" id="qc-warning">—</div>
+                            <div class="quick-count-label">Warning SKUs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="quick-count">
+                        <div class="quick-count-icon info"><i class="bi bi-info-circle-fill"></i></div>
+                        <div>
+                            <div class="quick-count-value" id="qc-info">—</div>
+                            <div class="quick-count-label">Insight-only SKUs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SKU Table -->
+            <div class="card-dark mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="font-size: 1rem;">SKU Summary</h5>
+                    <span class="text-dim" style="font-size: 0.8rem;" id="sku-table-count"></span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table-dark-custom" id="sku-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Product Name</th>
+                                <th class="text-end">Critical</th>
+                                <th class="text-end">Warning</th>
+                                <th class="text-end">Insights</th>
+                                <th>Health</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sku-tbody">
+                            <tr><td colspan="6" class="text-center text-dim" style="padding: 2rem;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CTA Banner -->
+            <div class="cta-banner" id="cta-banner">
+                <h3 id="cta-title">Your catalog needs attention</h3>
+                <p class="cta-subtitle" id="cta-subtitle">Unlock the full report to see every issue, with fix instructions and flat-file column references.</p>
+                <div class="cta-buttons" id="cta-buttons">
+                    <button class="btn-accent btn-lg" id="btn-unlock" onclick="startCheckout()">
+                        <i class="bi bi-unlock"></i> Unlock Full Report
+                    </button>
+                    <a href="#" class="btn-outline-accent btn-lg">
+                        <i class="bi bi-calendar-check"></i> Book a Consultation
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header"><h6 class="mb-0">Severity Breakdown</h6></div>
-                <div class="card-body d-flex align-items-center justify-content-center">
-                    <canvas id="chart-severity"></canvas>
+    </div>
+
+    <!-- Tab 2: Issue Details (Paid) -->
+    <div class="tab-panel" id="panel-details">
+        {% if payment_status == 'paid' %}
+        <!-- Unlocked: Full issue table -->
+        <div class="card-dark mb-4">
+            <div class="card-header">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control-dark w-100" id="detail-sku-search" placeholder="Search SKU...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select-dark w-100" id="detail-severity-filter">
+                            <option value="">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select-dark w-100" id="detail-query-filter">
+                            <option value="">All Issue Types</option>
+                            {% for q in queries_run %}
+                                {% set meta = query_metadata.get(q, {}) %}
+                                <option value="{{ q }}">{{ meta.get('label', q) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <span class="text-dim" style="font-size: 0.8rem;" id="detail-total-count"></span>
+                    </div>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="table-dark-custom">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Issue Type</th>
+                            <th>Severity</th>
+                            <th>Description</th>
+                            <th>Column</th>
+                            <th>Attribute</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detail-tbody">
+                        <tr><td colspan="6" class="text-center text-dim" style="padding: 2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center" id="detail-pagination"></div>
+        </div>
+        {% else %}
+        <!-- Locked: Upgrade prompt -->
+        <div class="card-dark locked-section">
+            <div class="locked-overlay">
+                <i class="bi bi-lock-fill lock-icon-large"></i>
+                <h4>Unlock Full Issue Details</h4>
+                <p id="locked-urgency">See every issue across your catalog with plain-English descriptions, severity levels, and exact flat-file column references.</p>
+                <div class="d-flex gap-md flex-wrap justify-content-center">
+                    <button class="btn-accent btn-lg" onclick="startCheckout()">
+                        <i class="bi bi-unlock"></i> Unlock Full Report
+                    </button>
+                    <a href="#" class="btn-outline-accent btn-lg">
+                        <i class="bi bi-calendar-check"></i> Book a Consultation
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row g-3 mb-4" id="product-type-chart-row" style="display: none;">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header"><h6 class="mb-0">Top Issues by Product Type</h6></div>
-                <div class="card-body">
-                    <canvas id="chart-by-product-type"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Query Results Summary Table -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header"><h5 class="mb-0">Query Results</h5></div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Query</th>
-                    <th class="text-end">Issues</th>
-                    <th class="text-end">Affected SKUs</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in results %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('scan.view_query_detail', scan_id=scan.id, query_name=r.query_name) }}" class="text-decoration-none fw-semibold">
-                            {{ r.query_name }}
-                        </a>
-                        <br><small class="text-muted">{{ r.query_description }}</small>
-                    </td>
-                    <td class="text-end">
-                        {% if r.total_issues > 0 %}
-                            <span class="badge bg-danger">{{ r.total_issues }}</span>
-                        {% else %}
-                            <span class="badge bg-success">0</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">{{ r.affected_skus }}</td>
-                    <td class="text-end">
-                        <a href="{{ url_for('scan.view_query_detail', scan_id=scan.id, query_name=r.query_name) }}" class="btn btn-sm btn-outline-primary">
-                            Details <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Filtered Issues Table -->
-<div class="card shadow-sm" id="issues-section" data-scan-id="{{ scan.id }}">
-    <div class="card-header">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-4">
-                <h5 class="mb-0">All Issues</h5>
-            </div>
-            <div class="col-md-3">
-                <input type="text" class="form-control form-control-sm" id="sku-search" placeholder="Search SKU...">
-            </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" id="severity-filter">
-                    <option value="">All Severities</option>
-                    <option value="required">Required</option>
-                    <option value="conditional">Conditional</option>
-                    <option value="warning">Warning</option>
-                    <option value="info">Info</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select form-select-sm" id="query-filter">
-                    <option value="">All Queries</option>
-                    {% for q in queries_run %}
-                        <option value="{{ q }}">{{ q }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Row</th>
-                    <th>SKU</th>
-                    <th>Query</th>
-                    <th>Field</th>
-                    <th>Severity</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody id="issues-tbody">
-                <tr><td colspan="6" class="text-center text-muted py-3">Loading issues...</td></tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="card-footer d-flex justify-content-between align-items-center" id="issues-pagination">
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-<script src="{{ url_for('static', filename='js/filters.js') }}"></script>
+<script src="{{ url_for('static', filename='js/results_dashboard.js') }}"></script>
 {% endblock %}

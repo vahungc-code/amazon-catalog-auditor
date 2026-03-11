@@ -3,8 +3,43 @@ import csv
 import json
 from flask import Blueprint, jsonify, request, make_response, current_app
 from ..database import get_db
+from ..services.aggregation_service import aggregate_skus, get_issue_details, QUERY_METADATA
 
 api_bp = Blueprint('api', __name__)
+
+
+@api_bp.route('/scan/<int:scan_id>/sku-overview')
+def sku_overview(scan_id):
+    """Free tier: health score, stat totals, severity bar, SKU summary table."""
+    data = aggregate_skus(scan_id)
+    if data is None:
+        return jsonify({'error': 'Scan not found'}), 404
+    return jsonify(data)
+
+
+@api_bp.route('/scan/<int:scan_id>/issue-details')
+def issue_details(scan_id):
+    """Paid tier: full issue table with friendly labels and column letters."""
+    sku_filter = request.args.get('sku', '').strip()
+    severity_filter = request.args.get('severity', '').strip()
+    query_filter = request.args.get('query', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('RESULTS_PER_PAGE', 50)
+
+    data = get_issue_details(scan_id, sku_filter, severity_filter, query_filter, page, per_page)
+    if data is None:
+        return jsonify({'error': 'Scan not found'}), 404
+    return jsonify(data)
+
+
+@api_bp.route('/scan/<int:scan_id>/payment-status')
+def payment_status(scan_id):
+    """Check payment status for a scan."""
+    db = get_db()
+    scan = db.execute('SELECT payment_status FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    if not scan:
+        return jsonify({'error': 'Scan not found'}), 404
+    return jsonify({'payment_status': scan['payment_status']})
 
 
 @api_bp.route('/scan/<int:scan_id>/chart-data')
@@ -19,7 +54,7 @@ def get_chart_data(scan_id):
         return jsonify({'error': 'Scan not found'}), 404
 
     issues_by_query = {
-        'labels': [r['query_name'] for r in rows],
+        'labels': [QUERY_METADATA.get(r['query_name'], {}).get('label', r['query_name']) for r in rows],
         'data': [r['total_issues'] for r in rows]
     }
 
@@ -103,6 +138,10 @@ def export_json(scan_id):
     if not scan:
         return jsonify({'error': 'Scan not found'}), 404
 
+    # Check payment status — export is a paid feature
+    if scan['payment_status'] != 'paid':
+        return jsonify({'error': 'Unlock the full report to export results'}), 403
+
     rows = db.execute(
         'SELECT * FROM scan_results WHERE scan_id = ?', (scan_id,)
     ).fetchall()
@@ -137,6 +176,10 @@ def export_csv(scan_id):
     scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
     if not scan:
         return jsonify({'error': 'Scan not found'}), 404
+
+    # Check payment status — export is a paid feature
+    if scan['payment_status'] != 'paid':
+        return jsonify({'error': 'Unlock the full report to export results'}), 403
 
     rows = db.execute(
         'SELECT * FROM scan_results WHERE scan_id = ?', (scan_id,)

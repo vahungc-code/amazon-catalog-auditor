@@ -10,3 +10,9 @@ class Config:
     DATABASE_PATH = os.path.join(BASE_DIR, 'instance', 'catalog_web.db')
     ALLOWED_EXTENSIONS = {'xlsx', 'xlsm'}
     RESULTS_PER_PAGE = 50
+
+    # Stripe configuration
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    STRIPE_PRICE_AMOUNT = int(os.environ.get('STRIPE_PRICE_AMOUNT', '999'))  # in cents ($9.99)
+    STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')

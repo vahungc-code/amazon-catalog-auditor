@@ -1,6 +1,7 @@
 import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from ..services.scan_service import get_available_queries, parse_clr_file, execute_scan
+from ..services.aggregation_service import QUERY_METADATA, SEVERITY_GROUPS
 from ..database import get_db
 
 scan_bp = Blueprint('scan', __name__)
@@ -28,7 +29,9 @@ def scan_options(upload_id):
                            listing_count=len(listings),
                            product_types=product_types,
                            queries=queries,
-                           upload_id=upload_id)
+                           upload_id=upload_id,
+                           query_metadata=QUERY_METADATA,
+                           severity_groups=SEVERITY_GROUPS)
 
 
 @scan_bp.route('/run/<upload_id>', methods=['POST'])
@@ -74,7 +77,9 @@ def view_results(scan_id):
     return render_template('results.html',
                            scan=scan,
                            results=results,
-                           queries_run=queries_run)
+                           queries_run=queries_run,
+                           payment_status=scan['payment_status'],
+                           query_metadata=QUERY_METADATA)
 
 
 @scan_bp.route('/<int:scan_id>/query/<query_name>')
@@ -101,10 +106,13 @@ def view_query_detail(scan_id, query_name):
     start = (page - 1) * per_page
     paginated_issues = issues[start:start + per_page]
 
+    meta = QUERY_METADATA.get(query_name, {})
+
     return render_template('results_detail.html',
                            scan=scan,
                            result=result,
                            issues=paginated_issues,
                            page=page,
                            total_pages=total_pages,
-                           total_issues=len(issues))
+                           total_issues=len(issues),
+                           query_meta=meta)

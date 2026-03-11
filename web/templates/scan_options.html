@@ -1,67 +1,81 @@
 {% extends "base.html" %}
 
-{% block title %}Scan Options - {{ filename }}{% endblock %}
+{% block title %}Choose Audit Checks — {{ filename }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <h2 class="mb-3">Scan Options</h2>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-file-earmark-spreadsheet"></i> {{ filename }}</h5>
-                <div class="row mt-3">
-                    <div class="col-sm-6">
-                        <span class="text-muted">Listings:</span>
-                        <strong>{{ listing_count }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                        <span class="text-muted">Product Types:</span>
-                        <strong>{{ product_types|length }}</strong>
-                    </div>
-                </div>
-                {% if product_types %}
-                <div class="mt-2">
-                    {% for pt in product_types[:10] %}
-                        <span class="badge bg-secondary me-1">{{ pt }}</span>
-                    {% endfor %}
-                    {% if product_types|length > 10 %}
-                        <span class="badge bg-secondary">+{{ product_types|length - 10 }} more</span>
-                    {% endif %}
-                </div>
+        <div class="mb-4">
+            <h2 class="fw-800" style="font-size: 1.5rem;">Choose Your Audit Checks</h2>
+            <p class="text-muted-custom" style="font-size: 0.9rem;">
+                <i class="bi bi-file-earmark-spreadsheet text-accent"></i>
+                {{ filename }}
+                <span class="text-dim mx-2">|</span>
+                <strong>{{ listing_count }}</strong> listings
+                <span class="text-dim mx-2">|</span>
+                <strong>{{ product_types|length }}</strong> product types
+            </p>
+            {% if product_types %}
+            <div class="d-flex flex-wrap gap-xs mt-1">
+                {% for pt in product_types[:8] %}
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ pt }}</span>
+                {% endfor %}
+                {% if product_types|length > 8 %}
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">+{{ product_types|length - 8 }} more</span>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
 
-        <form action="{{ url_for('scan.run_scan', upload_id=upload_id) }}" method="POST">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Select Queries</h5>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="select-all" checked>
-                        <label class="form-check-label" for="select-all">Select All</label>
-                    </div>
+        <form action="{{ url_for('scan.run_scan', upload_id=upload_id) }}" method="POST" id="scan-form">
+
+            {% for group in severity_groups %}
+            <div class="mb-4">
+                <div class="query-group-title">
+                    <span class="group-dot" style="background: {{ group.color }};"></span>
+                    {{ group.label }}
+                    <span class="text-dim" style="font-size: 0.8rem; font-weight: 400; font-family: var(--font-body);">— {{ group.description }}</span>
                 </div>
-                <div class="card-body">
-                    {% for query in queries %}
-                    <div class="form-check mb-2">
-                        <input class="form-check-input query-check" type="checkbox"
-                               name="queries" value="{{ query.name }}"
-                               id="q-{{ query.name }}" checked>
-                        <label class="form-check-label" for="q-{{ query.name }}">
-                            <strong>{{ query.name }}</strong>
-                            <span class="text-muted ms-2">{{ query.description }}</span>
-                        </label>
+
+                {% for query in queries %}
+                    {% set meta = query_metadata.get(query.name, {}) %}
+                    {% if meta.get('group') == group.key %}
+                    <div class="query-card group-{{ group.key }}">
+                        <div class="query-card-header" onclick="toggleQueryCard(this)">
+                            <input class="query-checkbox form-check-input" type="checkbox"
+                                   name="queries" value="{{ query.name }}"
+                                   id="q-{{ query.name }}" checked
+                                   onclick="event.stopPropagation(); updateSelectAll();">
+                            <label class="query-label" for="q-{{ query.name }}" onclick="event.stopPropagation();">
+                                {{ meta.get('label', query.name) }}
+                            </label>
+                            <i class="bi bi-chevron-down query-expand"></i>
+                        </div>
+                        <div class="query-card-body">
+                            {{ meta.get('description', query.description) }}
+                            {% if meta.get('example') %}
+                            <div class="query-example">{{ meta.example }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="card-dark p-3 mb-4 d-flex align-items-center justify-content-between">
+                <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                    <input class="form-check-input" type="checkbox" id="select-all" checked onchange="toggleAll(this.checked)">
+                    <span class="text-muted-custom" style="font-size: 0.85rem; font-weight: 500;">Select All</span>
+                </label>
+                <span class="text-dim" style="font-size: 0.8rem;" id="selected-count">{{ queries|length }} of {{ queries|length }} selected</span>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" name="run_all" value="1" class="btn btn-primary btn-lg flex-grow-1">
+            <div class="d-flex gap-md">
+                <button type="submit" name="run_all" value="1" class="btn-accent btn-lg flex-grow-1">
                     <i class="bi bi-play-fill"></i> Run All Queries
                 </button>
-                <button type="submit" class="btn btn-outline-primary btn-lg flex-grow-1">
+                <button type="submit" class="btn-outline-accent btn-lg flex-grow-1">
                     <i class="bi bi-play"></i> Run Selected
                 </button>
             </div>
@@ -72,13 +86,25 @@
 
 {% block extra_scripts %}
 <script>
-    const selectAll = document.getElementById('select-all');
-    const checks = document.querySelectorAll('.query-check');
-    selectAll.addEventListener('change', function() {
-        checks.forEach(c => c.checked = this.checked);
-    });
-    checks.forEach(c => c.addEventListener('change', function() {
-        selectAll.checked = [...checks].every(c => c.checked);
-    }));
+    function toggleQueryCard(header) {
+        header.closest('.query-card').classList.toggle('expanded');
+    }
+
+    function toggleAll(checked) {
+        document.querySelectorAll('.query-checkbox').forEach(c => c.checked = checked);
+        updateCount();
+    }
+
+    function updateSelectAll() {
+        const checks = document.querySelectorAll('.query-checkbox');
+        document.getElementById('select-all').checked = [...checks].every(c => c.checked);
+        updateCount();
+    }
+
+    function updateCount() {
+        const checks = document.querySelectorAll('.query-checkbox');
+        const selected = [...checks].filter(c => c.checked).length;
+        document.getElementById('selected-count').textContent = `${selected} of ${checks.length} selected`;
+    }
 </script>
 {% endblock %}
