@@ -25,6 +25,7 @@ def create_checkout_session(scan_id):
     session = stripe.checkout.Session.create(
         mode='payment',
         payment_method_types=['card'],
+        allow_promotion_codes=True,
         line_items=[{
             'price_data': {
                 'currency': currency,
