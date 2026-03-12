@@ -26,6 +26,8 @@ def create_checkout_session(scan_id):
         mode='payment',
         payment_method_types=['card'],
         allow_promotion_codes=True,
+        customer_creation='always',
+        billing_address_collection='required',
         line_items=[{
             'price_data': {
                 'currency': currency,
