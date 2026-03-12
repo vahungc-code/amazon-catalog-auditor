@@ -46,6 +46,7 @@ class CLRParser:
         
         # Parse structure
         self.headers = self._extract_headers()
+        self.field_ids = self._extract_field_ids()
         self.field_definitions = self._extract_field_definitions()
         
     def _extract_headers(self) -> Dict[str, int]:
@@ -59,6 +60,18 @@ class CLRParser:
         
         return headers
     
+    def _extract_field_ids(self) -> Dict[str, int]:
+        """Extract field IDs from Row 5 and map them to column indices.
+        These IDs match the Data Definitions 'Field Name' column."""
+        field_ids = {}
+        field_id_row = self.template_sheet[self.ROW_FIELD_IDS]
+
+        for idx, cell in enumerate(field_id_row, start=1):
+            if cell.value:
+                field_ids[str(cell.value).strip()] = idx
+
+        return field_ids
+
     def _extract_field_definitions(self) -> Dict[str, Dict]:
         """Extract field definitions from Data Definitions sheet"""
         definitions = {}

@@ -75,6 +75,7 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
 
     headers_data = {
         'columns': parser.headers,
+        'field_ids': parser.field_ids,
         'total_checkable_fields': total_checkable_fields,
         'total_possible': total_possible,
         'num_required': len(required_fields),

@@ -259,11 +259,13 @@ def get_issue_details(scan_id, sku_filter='', severity_filter='', query_filter='
         return {'locked': True, 'message': 'Unlock full report to see issue details'}
 
     headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
-    # Support new format {columns: {...}} and old format (flat dict)
+    # Support new format {columns: {...}, field_ids: {...}} and old format (flat dict)
     if isinstance(headers_raw, dict) and 'columns' in headers_raw:
         headers = headers_raw['columns']
+        field_ids = headers_raw.get('field_ids', {})
     else:
         headers = headers_raw
+        field_ids = {}
     rows = db.execute(
         'SELECT query_name, issues_json FROM scan_results WHERE scan_id = ?',
         (scan_id,)
@@ -290,7 +292,9 @@ def get_issue_details(scan_id, sku_filter='', severity_filter='', query_filter='
                 continue
 
             field_name = issue.get('field', '')
-            col_letter = column_index_to_letter(headers.get(field_name, 0))
+            # Try Template column headers first, then Data Definitions field IDs
+            col_idx = headers.get(field_name, 0) or field_ids.get(field_name, 0)
+            col_letter = column_index_to_letter(col_idx)
 
             issues.append({
                 'sku': sku,
