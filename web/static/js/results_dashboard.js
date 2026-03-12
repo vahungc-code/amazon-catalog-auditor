@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function () {
         sortedTypes.forEach(([typeName, typeData]) => {
             const sev = typeData.severity;
             const issues = typeData.issues;
-            const startOpen = sev === 'critical';
             const groupId = 'grp-' + Math.random().toString(36).substr(2, 9);
 
             html += `
@@ -160,9 +159,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <span class="badge-severity badge-${sev}" style="font-size: 0.65rem;">${sev.toUpperCase()}</span>
                     <span class="issue-group-title">${esc(typeName)}</span>
                     <span class="issue-group-count">${issues.length}</span>
-                    <span class="issue-group-chevron ${startOpen ? 'open' : ''}" id="chevron-${groupId}">&#8250;</span>
+                    <span class="issue-group-chevron" id="chevron-${groupId}">&#8250;</span>
                 </div>
-                <div class="issue-group-body ${startOpen ? 'open' : ''}" id="body-${groupId}">`;
+                <div class="issue-group-body" id="body-${groupId}">`;
 
             issues.forEach(issue => {
                 html += `
