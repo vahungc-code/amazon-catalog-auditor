@@ -36,9 +36,12 @@ class CLRParser:
     ROW_EXAMPLE = 6
     ROW_DATA_START = 7
 
-    # Amazon-controlled fields: these depend on Amazon, not the seller.
-    # Exclude from completeness score and missing-attribute checks.
-    AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title'}
+    # Amazon-controlled or auto-populated fields: exclude from completeness
+    # score and missing-attribute checks.
+    # - listing_status: controlled by Amazon (Active/Inactive/Removed)
+    # - title: controlled by Amazon (the display title)
+    # - contribution_sku: the SKU itself — always present if the row exists
+    AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku'}
     
     def __init__(self, clr_file_path: str):
         """Load and parse CLR file"""
@@ -127,10 +130,15 @@ class CLRParser:
     
     def _is_amazon_controlled(self, field_name: str) -> bool:
         """Check if a field is Amazon-controlled (not editable by sellers).
-        Matches field names like 'listing_status', '::listing_status', 'title', '::title'.
+        Handles various naming formats:
+          '::listing_status'  → listing_status
+          'contribution_sku#1.value' → contribution_sku
+          'title' → title
         """
         normalized = field_name.strip().lstrip(':').lower()
-        return normalized in self.AMAZON_CONTROLLED_FIELDS
+        # Strip suffixes like #1.value, #2.value etc.
+        base_name = normalized.split('#')[0].split('.')[0]
+        return normalized in self.AMAZON_CONTROLLED_FIELDS or base_name in self.AMAZON_CONTROLLED_FIELDS
 
     def get_required_fields(self) -> List[str]:
         """Get list of required field names (excluding Amazon-controlled fields)"""
@@ -208,10 +216,15 @@ class CLRParser:
                 if not status or status.strip().lower() != 'active':
                     continue
 
-            # Extract all fields
+            # Extract all fields — index by both Row 4 headers and Row 5 field IDs
+            # so lookups work whether using display names ("SKU") or
+            # Data Definitions names ("contribution_sku#1.value")
             all_fields = {}
             for header_name, col_idx in self.headers.items():
                 all_fields[header_name] = self._get_cell_value(row, col_idx)
+            for field_id, col_idx in self.field_ids.items():
+                if field_id not in all_fields:
+                    all_fields[field_id] = self._get_cell_value(row, col_idx)
             
             # Extract bullet points
             bullets = []
