@@ -69,14 +69,16 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
     conditional_fields = parser.get_conditional_fields()
     total_checkable_fields = len(required_fields) + len(conditional_fields)
 
-    # Use the filtered listing count (the ones queries actually run on)
-    scanned_listings = parser.get_listings()
-    total_possible = len(scanned_listings) * total_checkable_fields
+    # Use total_listings for the completeness denominator
+    # (Don't call parser.get_listings() again — read_only mode exhausts the iterator)
+    total_possible = total_listings * total_checkable_fields
 
     headers_data = {
         'columns': parser.headers,
         'total_checkable_fields': total_checkable_fields,
         'total_possible': total_possible,
+        'num_required': len(required_fields),
+        'num_conditional': len(conditional_fields),
     }
     headers_json = json.dumps(headers_data)
     sku_names_json = json.dumps(sku_names)

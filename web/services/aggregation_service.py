@@ -144,15 +144,28 @@ def aggregate_skus(scan_id):
     else:
         total_possible = 0
 
+    # Check which queries ran — if missing-any-attributes ran, skip missing-attributes
+    # because missing-any-attributes already checks required + conditional (superset)
+    query_names_run = [row['query_name'] for row in rows]
+    has_missing_any = 'missing-any-attributes' in query_names_run
+    skip_queries = set()
+    if has_missing_any:
+        skip_queries.add('missing-attributes')  # avoid double-counting
+
     # Aggregate issues per SKU
     sku_data = {}
     total_critical = 0
     total_warning = 0
     total_info = 0
-    missing_field_issues = 0  # count from missing-any-attributes only (avoids double-counting)
+    missing_field_issues = 0  # count from missing-any-attributes only
 
     for row in rows:
         query_name = row['query_name']
+
+        # Skip double-counted queries
+        if query_name in skip_queries:
+            continue
+
         issues = json.loads(row['issues_json'])
         for issue in issues:
             sku = issue.get('sku', '')
@@ -169,8 +182,6 @@ def aggregate_skus(scan_id):
                 total_info += 1
 
             # Count missing fields for completeness score
-            # Only use missing-any-attributes (it already includes required + conditional)
-            # Using missing-attributes too would double-count required fields
             if query_name == 'missing-any-attributes':
                 missing_field_issues += 1
 
