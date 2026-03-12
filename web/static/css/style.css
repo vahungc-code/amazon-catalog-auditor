@@ -122,15 +122,12 @@ a:hover {
     color: var(--accent);
 }
 
-.navbar-oss-logo {
-    height: 14px;
-    object-fit: contain;
-    margin-top: 1px;
-    opacity: 0.7;
-    transition: opacity var(--transition);
-}
-.navbar-dark-custom .navbar-brand:hover .navbar-oss-logo {
-    opacity: 1;
+.navbar-brand-sub {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    margin-left: 1.65rem;
 }
 
 .navbar-dark-custom .nav-link {
