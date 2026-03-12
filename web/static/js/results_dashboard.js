@@ -273,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ------- Payment polling (if pending) -------
-    if (paymentStatus === 'pending' || new URLSearchParams(window.location.search).get('check_payment')) {
+    const hasCheckPayment = new URLSearchParams(window.location.search).get('check_payment');
+    if ((paymentStatus === 'pending' || hasCheckPayment) && paymentStatus !== 'paid') {
         let pollCount = 0;
         const pollInterval = setInterval(() => {
             pollCount++;
@@ -282,7 +283,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.payment_status === 'paid') {
                         clearInterval(pollInterval);
-                        window.location.reload();
+                        // Redirect without query params to prevent reload loop
+                        window.location.href = window.location.pathname;
                     }
                 });
             if (pollCount > 60) clearInterval(pollInterval); // stop after 5 minutes
