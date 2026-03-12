@@ -59,7 +59,8 @@
             <!-- Health Score + Stats Row -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3 d-flex justify-content-center align-items-center">
-                    <div class="health-ring" id="health-ring">
+                    <div class="health-ring" id="health-ring" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                         title="Percentage of required and conditional fields that are filled in across all your SKUs.">
                         <svg width="160" height="160" viewBox="0 0 160 160">
                             <circle class="health-ring-bg" cx="80" cy="80" r="65"/>
                             <circle class="health-ring-fill" cx="80" cy="80" r="65"
@@ -74,25 +75,29 @@
                 <div class="col-md-9">
                     <div class="row g-3">
                         <div class="col-6 col-lg-3">
-                            <div class="stat-card">
+                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                 title="Total number of unique product rows (SKUs) found in your uploaded file.">
                                 <div class="stat-value text-accent" id="stat-listings">—</div>
                                 <div class="stat-label">Total Listings</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
-                            <div class="stat-card">
+                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                 title="Number of unique SKUs that have at least one issue detected across all audit checks.">
                                 <div class="stat-value text-warning-custom" id="stat-affected">—</div>
                                 <div class="stat-label">Affected SKUs</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
-                            <div class="stat-card">
+                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                 title="Issues from missing required or conditional fields — these can suppress your listing or prevent it from showing in search.">
                                 <div class="stat-value text-critical" id="stat-critical">—</div>
                                 <div class="stat-label">Critical Issues</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
-                            <div class="stat-card">
+                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                 title="Sum of all issues found across every audit check, including critical, warnings, and informational insights.">
                                 <div class="stat-value" style="color: var(--text);" id="stat-total">—</div>
                                 <div class="stat-label">Total Issues</div>
                             </div>

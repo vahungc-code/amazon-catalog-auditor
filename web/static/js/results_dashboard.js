@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const scanId = app.dataset.scanId;
     const paymentStatus = app.dataset.paymentStatus;
 
+    // ------- Initialize Bootstrap tooltips -------
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el);
+    });
+
     // ------- Tab switching -------
     window.switchTab = function (tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

@@ -149,7 +149,7 @@ def aggregate_skus(scan_id):
     total_critical = 0
     total_warning = 0
     total_info = 0
-    missing_field_issues = 0  # count of issues from missing-attributes + missing-any-attributes
+    missing_field_issues = 0  # count from missing-any-attributes only (avoids double-counting)
 
     for row in rows:
         query_name = row['query_name']
@@ -169,7 +169,9 @@ def aggregate_skus(scan_id):
                 total_info += 1
 
             # Count missing fields for completeness score
-            if query_name in ('missing-attributes', 'missing-any-attributes'):
+            # Only use missing-any-attributes (it already includes required + conditional)
+            # Using missing-attributes too would double-count required fields
+            if query_name == 'missing-any-attributes':
                 missing_field_issues += 1
 
             if sku not in sku_data:
