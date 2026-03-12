@@ -91,12 +91,20 @@ SEVERITY_GROUPS = [
 # Health score computation
 # ---------------------------------------------------------------------------
 
-def compute_health_score(critical_count, warning_count, info_count, total_skus):
-    """Compute 0-100 health score. Higher = healthier catalog."""
+def compute_health_score(critical_skus, warning_skus, info_skus, total_skus):
+    """Compute 0-100 health score based on % of SKUs affected per severity.
+    Uses SKU counts (not issue counts) so a SKU with 100 issues
+    doesn't tank the score more than a SKU with 1 issue.
+    """
     if total_skus == 0:
         return 100
-    raw = (critical_count * 3 + warning_count * 1.5 + info_count * 0.5) / total_skus
-    return max(0, round(100 - raw))
+    # Weighted percentage of affected SKUs
+    penalty = (
+        (critical_skus / total_skus) * 60 +
+        (warning_skus / total_skus) * 25 +
+        (info_skus / total_skus) * 10
+    )
+    return max(0, round(100 - penalty))
 
 
 def health_label(score):
@@ -175,13 +183,13 @@ def aggregate_skus(scan_id):
             data['health'] = 'Clean'
             data['health_color'] = '#10B981'
 
-    # SKU category counts
+    # SKU category counts — total SKUs with each severity (not exclusive)
     critical_skus = sum(1 for d in sku_data.values() if d['critical'] > 0)
-    warning_skus = sum(1 for d in sku_data.values() if d['critical'] == 0 and d['warning'] > 0)
-    info_only_skus = sum(1 for d in sku_data.values() if d['critical'] == 0 and d['warning'] == 0 and d['info'] > 0)
+    warning_skus = sum(1 for d in sku_data.values() if d['warning'] > 0)
+    info_skus = sum(1 for d in sku_data.values() if d['info'] > 0)
 
     total_skus = scan['total_listings']
-    score = compute_health_score(total_critical, total_warning, total_info, total_skus)
+    score = compute_health_score(critical_skus, warning_skus, info_skus, total_skus)
     label, color = health_label(score)
 
     # Sort SKU table: worst first
@@ -203,7 +211,7 @@ def aggregate_skus(scan_id):
         'severity_sku_counts': {
             'critical_skus': critical_skus,
             'warning_skus': warning_skus,
-            'info_only_skus': info_only_skus,
+            'info_only_skus': info_skus,
         },
         'sku_table': sku_table,
     }
