@@ -1067,6 +1067,44 @@ code {
     font-size: 0.825rem;
 }
 
+/* --- Click-to-Copy --- */
+.copyable {
+    cursor: pointer;
+    position: relative;
+    transition: color var(--transition), background var(--transition);
+    border-radius: 3px;
+}
+.copyable:hover {
+    color: var(--accent);
+}
+.copyable::after {
+    content: '';
+    position: absolute;
+    display: none;
+}
+
+.copy-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--text);
+    color: var(--bg-surface);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 100px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 9999;
+    white-space: nowrap;
+}
+.copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
 
 /* --- Compare Page --- */
 .compare-card {

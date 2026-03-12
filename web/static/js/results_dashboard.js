@@ -106,9 +106,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Main row
             html += `
             <tr class="sku-row" data-sku-idx="${idx}" onclick="toggleSkuRow(${idx})">
-                <td><code>${esc(s.sku)}</code></td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                    title="${esc(s.product_name)}">${esc(s.product_name)}</td>
+                <td><code class="copyable" title="Click to copy SKU" onclick="copyToClipboard('${esc(s.sku).replace(/'/g, "\\'")}', event)">${esc(s.sku)}</code></td>
+                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span class="copyable" title="Click to copy product name" onclick="copyToClipboard('${esc(s.product_name).replace(/'/g, "\\'")}', event)">${esc(s.product_name)}</span></td>
                 <td class="text-end">${s.critical > 0 ? `<span class="text-critical">${s.critical}</span>` : '<span class="text-dim">0</span>'}</td>
                 <td class="text-end">${s.warning > 0 ? `<span class="text-warning-custom">${s.warning}</span>` : '<span class="text-dim">0</span>'}</td>
                 <td class="text-end">${s.info > 0 ? `<span class="text-info-custom">${s.info}</span>` : '<span class="text-dim">0</span>'}</td>
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="issue-row">
                         <div class="issue-row-left">
                             <div class="issue-field-name">${esc(issue.description || issue.field)}</div>
-                            ${issue.field ? `<div class="issue-field-attr">${esc(issue.field)}</div>` : ''}
+                            ${issue.field ? `<div class="issue-field-attr copyable" title="Click to copy attribute name" onclick="copyToClipboard('${esc(issue.field).replace(/'/g, "\\'")}', event)">${esc(issue.field)}</div>` : ''}
                         </div>
                         ${issue.column_letter ? `<span class="issue-col-badge">${esc(issue.column_letter)}</span>` : ''}
                     </div>`;
@@ -327,6 +327,25 @@ document.addEventListener('DOMContentLoaded', function () {
             if (pollCount > 60) clearInterval(pollInterval);
         }, 5000);
     }
+
+    // ------- Click-to-Copy -------
+    // Create toast element once
+    const copyToast = document.createElement('div');
+    copyToast.className = 'copy-toast';
+    document.body.appendChild(copyToast);
+    let copyToastTimer = null;
+
+    window.copyToClipboard = function (text, event) {
+        if (event) event.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+            copyToast.textContent = 'Copied!';
+            copyToast.classList.add('show');
+            clearTimeout(copyToastTimer);
+            copyToastTimer = setTimeout(() => {
+                copyToast.classList.remove('show');
+            }, 1500);
+        });
+    };
 
     // ------- Utility -------
     function esc(text) {
