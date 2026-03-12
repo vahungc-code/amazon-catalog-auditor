@@ -40,13 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error(err);
         });
 
-    // ------- Health Score Ring -------
+    // ------- Completeness Score Ring -------
     function renderHealthScore(data) {
         const score = data.health_score;
         const color = data.health_color;
         const label = data.health_label;
 
-        document.getElementById('health-score').textContent = score;
+        document.getElementById('health-score').textContent = score + '%';
         document.getElementById('health-score').style.color = color;
         document.getElementById('health-label').textContent = label;
         document.getElementById('health-label').style.color = color;

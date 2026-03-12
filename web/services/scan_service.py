@@ -63,8 +63,22 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
         if listing.sku:
             sku_names[listing.sku] = listing.title or listing.sku
 
-    # Serialize parser headers for flat-file column letter lookup
-    headers_json = json.dumps(parser.headers)
+    # Serialize parser headers + field counts for completeness score
+    # Count total checkable fields (required + conditional from Data Definitions)
+    required_fields = parser.get_required_fields()
+    conditional_fields = parser.get_conditional_fields()
+    total_checkable_fields = len(required_fields) + len(conditional_fields)
+
+    # Use the filtered listing count (the ones queries actually run on)
+    scanned_listings = parser.get_listings()
+    total_possible = len(scanned_listings) * total_checkable_fields
+
+    headers_data = {
+        'columns': parser.headers,
+        'total_checkable_fields': total_checkable_fields,
+        'total_possible': total_possible,
+    }
+    headers_json = json.dumps(headers_data)
     sku_names_json = json.dumps(sku_names)
 
     results = engine.execute_all()

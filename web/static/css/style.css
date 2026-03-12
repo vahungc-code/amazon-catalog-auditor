@@ -427,7 +427,7 @@ a:hover {
 .health-ring-score {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 2.5rem;
+    font-size: 2rem;
     line-height: 1;
 }
 .health-ring-label {

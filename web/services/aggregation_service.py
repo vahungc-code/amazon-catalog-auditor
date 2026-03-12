@@ -91,30 +91,31 @@ SEVERITY_GROUPS = [
 # Health score computation
 # ---------------------------------------------------------------------------
 
-def compute_health_score(critical_skus, warning_skus, info_skus, total_skus):
-    """Compute 0-100 health score based on % of SKUs affected per severity.
-    Uses SKU counts (not issue counts) so a SKU with 100 issues
-    doesn't tank the score more than a SKU with 1 issue.
+def compute_completeness(missing_field_issues, total_possible):
+    """Compute catalog completeness as a percentage.
+
+    missing_field_issues: number of missing attribute issues
+        (from missing-attributes + missing-any-attributes queries)
+    total_possible: total SKUs × total checkable fields
+
+    Returns 0-100 percentage.
     """
-    if total_skus == 0:
+    if total_possible == 0:
         return 100
-    # Weighted percentage of affected SKUs
-    penalty = (
-        (critical_skus / total_skus) * 60 +
-        (warning_skus / total_skus) * 25 +
-        (info_skus / total_skus) * 10
-    )
-    return max(0, round(100 - penalty))
+    filled = total_possible - missing_field_issues
+    return max(0, round((filled / total_possible) * 100))
 
 
-def health_label(score):
-    """Return (label, color) tuple for a health score."""
-    if score >= 70:
-        return 'Good', '#10B981'
-    elif score >= 40:
+def completeness_label(score):
+    """Return (label, color) tuple for a completeness score."""
+    if score >= 90:
+        return 'Excellent', '#10B981'
+    elif score >= 70:
+        return 'Good', '#1B75BB'
+    elif score >= 50:
         return 'Needs Work', '#F59E0B'
     else:
-        return 'At Risk', '#EF4444'
+        return 'Incomplete', '#EF4444'
 
 
 # ---------------------------------------------------------------------------
@@ -133,16 +134,25 @@ def aggregate_skus(scan_id):
         (scan_id,)
     ).fetchall()
 
-    # Load SKU names from scan metadata
+    # Load scan metadata
     sku_names = json.loads(scan['sku_names_json']) if scan['sku_names_json'] else {}
+    headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+
+    # headers_json may be new format {columns, total_possible, ...} or old format (flat dict)
+    if isinstance(headers_raw, dict) and 'total_possible' in headers_raw:
+        total_possible = headers_raw.get('total_possible', 0)
+    else:
+        total_possible = 0
 
     # Aggregate issues per SKU
     sku_data = {}
     total_critical = 0
     total_warning = 0
     total_info = 0
+    missing_field_issues = 0  # count of issues from missing-attributes + missing-any-attributes
 
     for row in rows:
+        query_name = row['query_name']
         issues = json.loads(row['issues_json'])
         for issue in issues:
             sku = issue.get('sku', '')
@@ -157,6 +167,10 @@ def aggregate_skus(scan_id):
                 total_warning += 1
             else:
                 total_info += 1
+
+            # Count missing fields for completeness score
+            if query_name in ('missing-attributes', 'missing-any-attributes'):
+                missing_field_issues += 1
 
             if sku not in sku_data:
                 sku_data[sku] = {
@@ -188,9 +202,9 @@ def aggregate_skus(scan_id):
     warning_skus = sum(1 for d in sku_data.values() if d['warning'] > 0)
     info_skus = sum(1 for d in sku_data.values() if d['info'] > 0)
 
-    total_skus = scan['total_listings']
-    score = compute_health_score(critical_skus, warning_skus, info_skus, total_skus)
-    label, color = health_label(score)
+    # Completeness score
+    score = compute_completeness(missing_field_issues, total_possible)
+    label, color = completeness_label(score)
 
     # Sort SKU table: worst first
     sku_table = sorted(sku_data.values(), key=lambda x: (x['critical'], x['warning'], x['info']), reverse=True)
@@ -231,7 +245,12 @@ def get_issue_details(scan_id, sku_filter='', severity_filter='', query_filter='
     if scan['payment_status'] != 'paid':
         return {'locked': True, 'message': 'Unlock full report to see issue details'}
 
-    headers = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+    headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+    # Support new format {columns: {...}} and old format (flat dict)
+    if isinstance(headers_raw, dict) and 'columns' in headers_raw:
+        headers = headers_raw['columns']
+    else:
+        headers = headers_raw
     rows = db.execute(
         'SELECT query_name, issues_json FROM scan_results WHERE scan_id = ?',
         (scan_id,)
