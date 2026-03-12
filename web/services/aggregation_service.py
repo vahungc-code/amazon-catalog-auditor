@@ -152,6 +152,14 @@ def aggregate_skus(scan_id):
     if has_missing_any:
         skip_queries.add('missing-attributes')  # avoid double-counting
 
+    # Parse column mappings for column letter lookup
+    if isinstance(headers_raw, dict) and 'columns' in headers_raw:
+        col_headers = headers_raw['columns']
+        field_ids = headers_raw.get('field_ids', {})
+    else:
+        col_headers = headers_raw if isinstance(headers_raw, dict) else {}
+        field_ids = {}
+
     # Aggregate issues per SKU
     sku_data = {}
     total_critical = 0
@@ -166,6 +174,8 @@ def aggregate_skus(scan_id):
         if query_name in skip_queries:
             continue
 
+        meta = QUERY_METADATA.get(query_name, {})
+        issue_type_label = meta.get('label', query_name)
         issues = json.loads(row['issues_json'])
         for issue in issues:
             sku = issue.get('sku', '')
@@ -192,8 +202,25 @@ def aggregate_skus(scan_id):
                     'critical': 0,
                     'warning': 0,
                     'info': 0,
+                    'issues_by_type': {},
                 }
             sku_data[sku][mapped] += 1
+
+            # Group issues by issue type for expandable rows
+            field_name = issue.get('field', '')
+            col_idx = col_headers.get(field_name, 0) or field_ids.get(field_name, 0)
+            col_letter = column_index_to_letter(col_idx)
+
+            if issue_type_label not in sku_data[sku]['issues_by_type']:
+                sku_data[sku]['issues_by_type'][issue_type_label] = {
+                    'severity': mapped,
+                    'issues': [],
+                }
+            sku_data[sku]['issues_by_type'][issue_type_label]['issues'].append({
+                'field': field_name,
+                'description': issue.get('details', ''),
+                'column_letter': col_letter,
+            })
 
     # Compute per-SKU health status
     for data in sku_data.values():

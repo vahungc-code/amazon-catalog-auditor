@@ -36,229 +36,145 @@
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs-custom">
-        <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">
-            <i class="bi bi-grid-1x2 tab-icon"></i> SKU Overview
-        </button>
-        <button class="tab-btn" data-tab="details" onclick="switchTab('details')">
-            <i class="bi bi-table tab-icon"></i> Issue Details
-            {% if payment_status != 'paid' %}
-            <i class="bi bi-lock-fill lock-icon"></i>
-            {% endif %}
-        </button>
+    <!-- Loading -->
+    <div class="spinner-container" id="overview-loading">
+        <div class="spinner"></div>
     </div>
+    <div id="overview-content" style="display: none;">
 
-    <!-- Tab 1: SKU Overview (Free) -->
-    <div class="tab-panel active" id="panel-overview">
-        <div class="spinner-container" id="overview-loading">
-            <div class="spinner"></div>
-        </div>
-        <div id="overview-content" style="display: none;">
-
-            <!-- Health Score + Stats Row -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-3 d-flex justify-content-center align-items-center">
-                    <div class="health-ring" id="health-ring" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                         title="Percentage of required and conditional fields filled in across all your SKUs.">
-                        <svg width="160" height="160" viewBox="0 0 160 160">
-                            <circle class="health-ring-bg" cx="80" cy="80" r="65"/>
-                            <circle class="health-ring-fill" cx="80" cy="80" r="65"
-                                    stroke-dasharray="408.4" stroke-dashoffset="408.4" id="health-fill"/>
-                        </svg>
-                        <div class="health-ring-text">
-                            <div class="health-ring-score" id="health-score">—</div>
-                            <div class="health-ring-label" id="health-label">Catalog Completeness</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-9">
-                    <div class="row g-3">
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                 title="Total number of unique product rows (SKUs) found in your uploaded file.">
-                                <div class="stat-value text-accent" id="stat-listings">—</div>
-                                <div class="stat-label">Total Listings</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                 title="Number of unique SKUs that have at least one issue detected across all audit checks.">
-                                <div class="stat-value text-warning-custom" id="stat-affected">—</div>
-                                <div class="stat-label">Affected SKUs</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                 title="Issues from missing required or conditional fields — these can suppress your listing or prevent it from showing in search.">
-                                <div class="stat-value text-critical" id="stat-critical">—</div>
-                                <div class="stat-label">Critical Issues</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                 title="Sum of all issues found across every audit check, including critical, warnings, and informational insights.">
-                                <div class="stat-value" style="color: var(--text);" id="stat-total">—</div>
-                                <div class="stat-label">Total Issues</div>
-                            </div>
-                        </div>
+        <!-- Health Score + Stats Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 d-flex justify-content-center align-items-center">
+                <div class="health-ring" id="health-ring" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                     title="Percentage of required and conditional fields filled in across all your SKUs.">
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                        <circle class="health-ring-bg" cx="80" cy="80" r="65"/>
+                        <circle class="health-ring-fill" cx="80" cy="80" r="65"
+                                stroke-dasharray="408.4" stroke-dashoffset="408.4" id="health-fill"/>
+                    </svg>
+                    <div class="health-ring-text">
+                        <div class="health-ring-score" id="health-score">—</div>
+                        <div class="health-ring-label" id="health-label">Catalog Completeness</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Severity Bar -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between mb-2" style="font-size: 0.75rem;">
-                    <span class="text-muted-custom">Issue Distribution</span>
-                    <div class="d-flex gap-md">
-                        <span><span style="color: var(--critical);">&#9679;</span> Critical <span id="sev-critical-count" class="text-dim"></span></span>
-                        <span><span style="color: var(--warning);">&#9679;</span> Warning <span id="sev-warning-count" class="text-dim"></span></span>
-                        <span><span style="color: var(--info);">&#9679;</span> Info <span id="sev-info-count" class="text-dim"></span></span>
-                    </div>
-                </div>
-                <div class="severity-bar" id="severity-bar"></div>
-            </div>
-
-            <!-- Quick Counts -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="quick-count">
-                        <div class="quick-count-icon critical"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                        <div>
-                            <div class="quick-count-value" id="qc-critical">—</div>
-                            <div class="quick-count-label">Critical SKUs</div>
+            <div class="col-md-9">
+                <div class="row g-3">
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                             title="Total number of unique product rows (SKUs) found in your uploaded file.">
+                            <div class="stat-value text-accent" id="stat-listings">—</div>
+                            <div class="stat-label">Total Listings</div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="quick-count">
-                        <div class="quick-count-icon warning"><i class="bi bi-exclamation-circle-fill"></i></div>
-                        <div>
-                            <div class="quick-count-value" id="qc-warning">—</div>
-                            <div class="quick-count-label">Warning SKUs</div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                             title="Number of unique SKUs that have at least one issue detected across all audit checks.">
+                            <div class="stat-value text-warning-custom" id="stat-affected">—</div>
+                            <div class="stat-label">Affected SKUs</div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="quick-count">
-                        <div class="quick-count-icon info"><i class="bi bi-info-circle-fill"></i></div>
-                        <div>
-                            <div class="quick-count-value" id="qc-info">—</div>
-                            <div class="quick-count-label">Insight-only SKUs</div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                             title="Issues from missing required or conditional fields — these can suppress your listing or prevent it from showing in search.">
+                            <div class="stat-value text-critical" id="stat-critical">—</div>
+                            <div class="stat-label">Critical Issues</div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- SKU Table -->
-            <div class="card-dark mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0" style="font-size: 1rem;">SKU Summary</h5>
-                    <span class="text-dim" style="font-size: 0.8rem;" id="sku-table-count"></span>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table class="table-dark-custom" id="sku-table">
-                        <thead>
-                            <tr>
-                                <th>SKU</th>
-                                <th>Product Name</th>
-                                <th class="text-end">Critical</th>
-                                <th class="text-end">Warning</th>
-                                <th class="text-end">Insights</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sku-tbody">
-                            <tr><td colspan="5" class="text-center text-dim" style="padding: 2rem;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- CTA Banner -->
-            <div class="cta-banner" id="cta-banner">
-                <h3 id="cta-title">Your catalog needs attention</h3>
-                <p class="cta-subtitle" id="cta-subtitle">Unlock the full report to see every issue, with fix instructions and flat-file column references.</p>
-                <div class="cta-buttons" id="cta-buttons">
-                    <button class="btn-accent btn-lg" id="btn-unlock" onclick="startCheckout()">
-                        <i class="bi bi-unlock"></i> Unlock Full Report
-                    </button>
-                    <a href="#" class="btn-outline-accent btn-lg">
-                        <i class="bi bi-calendar-check"></i> Book a Consultation
-                    </a>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-card" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                             title="Sum of all issues found across every audit check, including critical, warnings, and informational insights.">
+                            <div class="stat-value" style="color: var(--text);" id="stat-total">—</div>
+                            <div class="stat-label">Total Issues</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Tab 2: Issue Details (Paid) -->
-    <div class="tab-panel" id="panel-details">
-        {% if payment_status == 'paid' %}
-        <!-- Unlocked: Full issue table -->
+        <!-- Severity Bar -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between mb-2" style="font-size: 0.75rem;">
+                <span class="text-muted-custom">Issue Distribution</span>
+                <div class="d-flex gap-md">
+                    <span><span style="color: var(--critical);">&#9679;</span> Critical <span id="sev-critical-count" class="text-dim"></span></span>
+                    <span><span style="color: var(--warning);">&#9679;</span> Warning <span id="sev-warning-count" class="text-dim"></span></span>
+                    <span><span style="color: var(--info);">&#9679;</span> Info <span id="sev-info-count" class="text-dim"></span></span>
+                </div>
+            </div>
+            <div class="severity-bar" id="severity-bar"></div>
+        </div>
+
+        <!-- Quick Counts -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="quick-count">
+                    <div class="quick-count-icon critical"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div>
+                        <div class="quick-count-value" id="qc-critical">—</div>
+                        <div class="quick-count-label">Critical SKUs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="quick-count">
+                    <div class="quick-count-icon warning"><i class="bi bi-exclamation-circle-fill"></i></div>
+                    <div>
+                        <div class="quick-count-value" id="qc-warning">—</div>
+                        <div class="quick-count-label">Warning SKUs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="quick-count">
+                    <div class="quick-count-icon info"><i class="bi bi-info-circle-fill"></i></div>
+                    <div>
+                        <div class="quick-count-value" id="qc-info">—</div>
+                        <div class="quick-count-label">Insight-only SKUs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SKU Table with expandable rows -->
         <div class="card-dark mb-4">
-            <div class="card-header">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-4">
-                        <input type="text" class="form-control-dark w-100" id="detail-sku-search" placeholder="Search SKU...">
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select-dark w-100" id="detail-severity-filter">
-                            <option value="">All Severities</option>
-                            <option value="critical">Critical</option>
-                            <option value="warning">Warning</option>
-                            <option value="info">Info</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select-dark w-100" id="detail-query-filter">
-                            <option value="">All Issue Types</option>
-                            {% for q in queries_run %}
-                                {% set meta = query_metadata.get(q, {}) %}
-                                <option value="{{ q }}">{{ meta.get('label', q) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <span class="text-dim" style="font-size: 0.8rem;" id="detail-total-count"></span>
-                    </div>
-                </div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" style="font-size: 1rem;">SKU Summary</h5>
+                <span class="text-dim" style="font-size: 0.8rem;" id="sku-table-count"></span>
             </div>
             <div style="overflow-x: auto;">
-                <table class="table-dark-custom">
+                <table class="table-dark-custom" id="sku-table">
                     <thead>
                         <tr>
                             <th>SKU</th>
-                            <th>Issue Type</th>
-                            <th>Severity</th>
-                            <th>Description</th>
-                            <th>Attribute</th>
+                            <th>Product Name</th>
+                            <th class="text-end">Critical</th>
+                            <th class="text-end">Warning</th>
+                            <th class="text-end">Insights</th>
+                            <th>Status</th>
+                            <th style="width: 30px;"></th>
                         </tr>
                     </thead>
-                    <tbody id="detail-tbody">
-                        <tr><td colspan="5" class="text-center text-dim" style="padding: 2rem;">Loading...</td></tr>
+                    <tbody id="sku-tbody">
+                        <tr><td colspan="7" class="text-center text-dim" style="padding: 2rem;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer d-flex justify-content-between align-items-center" id="detail-pagination"></div>
         </div>
-        {% else %}
-        <!-- Locked: Upgrade prompt -->
-        <div class="card-dark locked-section">
-            <div class="locked-overlay">
-                <i class="bi bi-lock-fill lock-icon-large"></i>
-                <h4>Unlock Full Issue Details</h4>
-                <p id="locked-urgency">See every issue across your catalog with plain-English descriptions, severity levels, and exact flat-file column references.</p>
-                <div class="d-flex gap-md flex-wrap justify-content-center">
-                    <button class="btn-accent btn-lg" onclick="startCheckout()">
-                        <i class="bi bi-unlock"></i> Unlock Full Report
-                    </button>
-                    <a href="#" class="btn-outline-accent btn-lg">
-                        <i class="bi bi-calendar-check"></i> Book a Consultation
-                    </a>
-                </div>
+
+        <!-- CTA Banner -->
+        <div class="cta-banner" id="cta-banner">
+            <h3 id="cta-title">Your catalog needs attention</h3>
+            <p class="cta-subtitle" id="cta-subtitle">Unlock the full report to see every issue, with fix instructions and flat-file column references.</p>
+            <div class="cta-buttons" id="cta-buttons">
+                <button class="btn-accent btn-lg" id="btn-unlock" onclick="startCheckout()">
+                    <i class="bi bi-unlock"></i> Unlock Full Report
+                </button>
+                <a href="#" class="btn-outline-accent btn-lg">
+                    <i class="bi bi-calendar-check"></i> Book a Consultation
+                </a>
             </div>
         </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -1,5 +1,5 @@
 /**
- * Results Dashboard — Tab switching, health score, SKU table, CTA, Stripe, payment polling
+ * Results Dashboard — Completeness ring, stats, expandable SKU rows, Stripe, payment polling
  */
 document.addEventListener('DOMContentLoaded', function () {
     const app = document.getElementById('results-app');
@@ -13,20 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Tooltip(el);
     });
 
-    // ------- Tab switching -------
-    window.switchTab = function (tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-        document.getElementById(`panel-${tab}`).classList.add('active');
-
-        // Load issue details on first switch (paid only)
-        if (tab === 'details' && paymentStatus === 'paid' && !detailsLoaded) {
-            loadIssueDetails();
-        }
-    };
-
-    // ------- Load SKU Overview (free tier) -------
+    // ------- Load SKU Overview -------
     fetch(`/api/scan/${scanId}/sku-overview`)
         .then(r => r.json())
         .then(data => {
@@ -49,18 +36,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderHealthScore(data) {
         const score = data.health_score;
         const color = data.health_color;
-        const label = data.health_label;
 
         document.getElementById('health-score').textContent = score + '%';
         document.getElementById('health-score').style.color = color;
         document.getElementById('health-label').textContent = 'Catalog Completeness';
 
         const fill = document.getElementById('health-fill');
-        const circumference = 408.4; // 2 * PI * 65
+        const circumference = 408.4;
         const offset = circumference - (score / 100) * circumference;
         fill.style.stroke = color;
 
-        // Animate after a brief delay
         setTimeout(() => {
             fill.style.strokeDashoffset = offset;
         }, 100);
@@ -99,19 +84,23 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('qc-info').textContent = counts.info_only_skus.toLocaleString();
     }
 
-    // ------- SKU Table -------
+    // ------- SKU Table with expandable rows -------
     function renderSkuTable(skus) {
         const tbody = document.getElementById('sku-tbody');
         const countEl = document.getElementById('sku-table-count');
         countEl.textContent = `${skus.length} SKUs`;
 
         if (!skus.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-dim" style="padding: 2rem;">No affected SKUs.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-dim" style="padding: 2rem;">No affected SKUs.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = skus.map(s => `
-            <tr>
+        let html = '';
+        skus.forEach((s, idx) => {
+            const totalIssues = s.critical + s.warning + s.info;
+            // Main row
+            html += `
+            <tr class="sku-row" data-sku-idx="${idx}" onclick="toggleSkuRow(${idx})">
                 <td><code>${esc(s.sku)}</code></td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                     title="${esc(s.product_name)}">${esc(s.product_name)}</td>
@@ -124,9 +113,140 @@ document.addEventListener('DOMContentLoaded', function () {
                         ${s.health}
                     </span>
                 </td>
-            </tr>
-        `).join('');
+                <td class="text-center">
+                    <span class="sku-chevron" id="chevron-${idx}">&#8250;</span>
+                </td>
+            </tr>`;
+
+            // Expandable detail row
+            html += `<tr class="sku-detail-row" id="sku-detail-${idx}" style="display: none;">
+                <td colspan="7" style="padding: 0; border-bottom: 1px solid var(--border);">`;
+
+            if (paymentStatus === 'paid') {
+                // PAID: Show grouped issues
+                html += renderPaidIssues(s.issues_by_type || {});
+            } else {
+                // FREE: Blurred preview with lock overlay
+                html += renderLockedIssues(totalIssues);
+            }
+
+            html += `</td></tr>`;
+        });
+
+        tbody.innerHTML = html;
     }
+
+    // ------- Paid: Render grouped issues -------
+    function renderPaidIssues(issuesByType) {
+        if (!issuesByType || Object.keys(issuesByType).length === 0) {
+            return '<div class="sku-expand-panel"><p class="text-dim" style="padding: 1rem; margin: 0;">No issues found.</p></div>';
+        }
+
+        const severityOrder = { critical: 0, warning: 1, info: 2 };
+        const sortedTypes = Object.entries(issuesByType).sort((a, b) => {
+            return (severityOrder[a[1].severity] || 2) - (severityOrder[b[1].severity] || 2);
+        });
+
+        let html = '<div class="sku-expand-panel">';
+        sortedTypes.forEach(([typeName, typeData]) => {
+            const sev = typeData.severity;
+            const issues = typeData.issues;
+            const startOpen = sev === 'critical';
+            const groupId = 'grp-' + Math.random().toString(36).substr(2, 9);
+
+            html += `
+            <div class="issue-group">
+                <div class="issue-group-header" onclick="event.stopPropagation(); toggleIssueGroup('${groupId}')">
+                    <span class="badge-severity badge-${sev}" style="font-size: 0.65rem;">${sev.toUpperCase()}</span>
+                    <span class="issue-group-title">${esc(typeName)}</span>
+                    <span class="issue-group-count">${issues.length}</span>
+                    <span class="issue-group-chevron ${startOpen ? 'open' : ''}" id="chevron-${groupId}">&#8250;</span>
+                </div>
+                <div class="issue-group-body ${startOpen ? 'open' : ''}" id="body-${groupId}">`;
+
+            issues.forEach(issue => {
+                html += `
+                    <div class="issue-row">
+                        <div class="issue-row-left">
+                            <div class="issue-field-name">${esc(issue.description || issue.field)}</div>
+                            ${issue.field ? `<div class="issue-field-attr">${esc(issue.field)}</div>` : ''}
+                        </div>
+                        ${issue.column_letter ? `<span class="issue-col-badge">${esc(issue.column_letter)}</span>` : ''}
+                    </div>`;
+            });
+
+            html += `</div></div>`;
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    // ------- Free: Blurred locked state -------
+    function renderLockedIssues(totalIssues) {
+        // Generate fake blurred rows
+        let fakeRows = '';
+        const fakeFields = ['item_name', 'bullet_point_1', 'brand_name', 'generic_keyword', 'product_description', 'color_name'];
+        for (let i = 0; i < Math.min(6, totalIssues); i++) {
+            fakeRows += `
+                <div class="issue-row">
+                    <div class="issue-row-left">
+                        <div class="issue-field-name">Missing required field: ${fakeFields[i % fakeFields.length]}</div>
+                        <div class="issue-field-attr">${fakeFields[i % fakeFields.length]}</div>
+                    </div>
+                    <span class="issue-col-badge">C${i + 1}</span>
+                </div>`;
+        }
+
+        return `
+        <div class="sku-expand-panel">
+            <div class="sku-locked-wrapper">
+                <div class="sku-locked-blur">
+                    ${fakeRows}
+                </div>
+                <div class="sku-locked-overlay">
+                    <i class="bi bi-lock-fill" style="font-size: 1.5rem; color: var(--text-dim);"></i>
+                    <div class="sku-locked-text">
+                        <strong>${totalIssues} issues hidden across this SKU</strong>
+                        <p>Unlock to see exact fields, flat file columns, and plain-English descriptions for every issue.</p>
+                    </div>
+                    <div class="sku-locked-buttons">
+                        <button class="btn-accent" onclick="event.stopPropagation(); startCheckout();">
+                            <i class="bi bi-unlock"></i> Unlock Full Report
+                        </button>
+                        <a href="#" class="btn-outline-accent" onclick="event.stopPropagation();">
+                            <i class="bi bi-calendar-check"></i> Book a Consultation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ------- Toggle SKU expandable row -------
+    window.toggleSkuRow = function (idx) {
+        const detailRow = document.getElementById(`sku-detail-${idx}`);
+        const chevron = document.getElementById(`chevron-${idx}`);
+        const mainRow = document.querySelector(`tr[data-sku-idx="${idx}"]`);
+
+        if (detailRow.style.display === 'none') {
+            detailRow.style.display = 'table-row';
+            chevron.classList.add('open');
+            mainRow.classList.add('expanded');
+        } else {
+            detailRow.style.display = 'none';
+            chevron.classList.remove('open');
+            mainRow.classList.remove('expanded');
+        }
+    };
+
+    // ------- Toggle issue group within expanded row -------
+    window.toggleIssueGroup = function (groupId) {
+        const body = document.getElementById(`body-${groupId}`);
+        const chevron = document.getElementById(`chevron-${groupId}`);
+        body.classList.toggle('open');
+        chevron.classList.toggle('open');
+    };
 
     // ------- CTA Banner -------
     function renderCTA(data) {
@@ -137,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const title = document.getElementById('cta-title');
         const subtitle = document.getElementById('cta-subtitle');
-        title.textContent = `Your catalog has ${data.critical_issues} critical issues across ${data.affected_skus} SKUs`;
+        title.textContent = `Your catalog has ${data.critical_issues.toLocaleString()} critical issues across ${data.affected_skus.toLocaleString()} SKUs`;
         subtitle.textContent = 'Unlock the full report to see every issue with fix instructions and flat-file column references.';
     }
 
@@ -164,113 +284,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     };
 
-    // ------- Issue Details (paid tier) -------
-    let detailsLoaded = false;
-
-    function loadIssueDetails(page) {
-        page = page || 1;
-        const skuSearch = document.getElementById('detail-sku-search');
-        const sevFilter = document.getElementById('detail-severity-filter');
-        const queryFilter = document.getElementById('detail-query-filter');
-
-        if (!skuSearch) return; // locked view
-
-        const params = new URLSearchParams({
-            sku: skuSearch.value,
-            severity: sevFilter.value,
-            query: queryFilter.value,
-            page: page,
-        });
-
-        fetch(`/api/scan/${scanId}/issue-details?${params}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.locked) return;
-                detailsLoaded = true;
-                renderDetailRows(data.issues);
-                renderDetailPagination(data.page, data.pages, data.total);
-            })
-            .catch(err => {
-                document.getElementById('detail-tbody').innerHTML =
-                    '<tr><td colspan="5" class="text-center text-critical" style="padding:2rem;">Failed to load issues.</td></tr>';
-            });
-    }
-
-    function renderDetailRows(issues) {
-        const tbody = document.getElementById('detail-tbody');
-        const countEl = document.getElementById('detail-total-count');
-
-        if (!issues || !issues.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-dim" style="padding:2rem;">No issues match your filters.</td></tr>';
-            if (countEl) countEl.textContent = '';
-            return;
-        }
-
-        tbody.innerHTML = issues.map(i => `
-            <tr>
-                <td><code>${esc(i.sku)}</code></td>
-                <td>${esc(i.issue_type)}</td>
-                <td><span class="badge-severity badge-${i.severity}">${i.severity_label}</span></td>
-                <td style="max-width: 300px;"><small>${esc(i.description)}</small></td>
-                <td><small class="text-dim">${esc(i.technical_attribute || '')}</small></td>
-            </tr>
-        `).join('');
-    }
-
-    function renderDetailPagination(currentPage, totalPages, total) {
-        const container = document.getElementById('detail-pagination');
-        const countEl = document.getElementById('detail-total-count');
-        if (countEl) countEl.textContent = `${total} issues`;
-
-        if (!container || totalPages <= 1) {
-            if (container) container.innerHTML = `<small class="text-dim">${total} issue${total !== 1 ? 's' : ''}</small>`;
-            return;
-        }
-
-        let html = `<small class="text-dim">${total} issues</small><ul class="pagination-dark">`;
-        html += `<li><a class="page-link-dark ${currentPage <= 1 ? 'disabled' : ''}" data-page="${currentPage - 1}">Prev</a></li>`;
-
-        for (let p = 1; p <= totalPages; p++) {
-            if (p <= 3 || p > totalPages - 2 || (p >= currentPage - 1 && p <= currentPage + 1)) {
-                html += `<li><a class="page-link-dark ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</a></li>`;
-            } else if (p === 4 || p === totalPages - 2) {
-                html += `<li><span class="page-link-dark disabled">...</span></li>`;
-            }
-        }
-
-        html += `<li><a class="page-link-dark ${currentPage >= totalPages ? 'disabled' : ''}" data-page="${currentPage + 1}">Next</a></li>`;
-        html += '</ul>';
-        container.innerHTML = html;
-
-        container.querySelectorAll('a[data-page]').forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                const p = parseInt(this.dataset.page);
-                if (p >= 1 && p <= totalPages) loadIssueDetails(p);
-            });
-        });
-    }
-
-    // Detail filters
-    if (paymentStatus === 'paid') {
-        let debounce;
-        const skuSearch = document.getElementById('detail-sku-search');
-        const sevFilter = document.getElementById('detail-severity-filter');
-        const queryFilter = document.getElementById('detail-query-filter');
-
-        if (skuSearch) {
-            skuSearch.addEventListener('input', () => {
-                clearTimeout(debounce);
-                debounce = setTimeout(() => loadIssueDetails(), 300);
-            });
-        }
-        if (sevFilter) sevFilter.addEventListener('change', () => loadIssueDetails());
-        if (queryFilter) queryFilter.addEventListener('change', () => loadIssueDetails());
-
-        // Auto-load details if we're on paid view
-        loadIssueDetails();
-    }
-
     // ------- Payment polling (if pending) -------
     const hasCheckPayment = new URLSearchParams(window.location.search).get('check_payment');
     if ((paymentStatus === 'pending' || hasCheckPayment) && paymentStatus !== 'paid') {
@@ -282,11 +295,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.payment_status === 'paid') {
                         clearInterval(pollInterval);
-                        // Redirect without query params to prevent reload loop
                         window.location.href = window.location.pathname;
                     }
                 });
-            if (pollCount > 60) clearInterval(pollInterval); // stop after 5 minutes
+            if (pollCount > 60) clearInterval(pollInterval);
         }, 5000);
     }
 
