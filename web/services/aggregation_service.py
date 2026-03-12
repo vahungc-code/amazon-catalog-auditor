@@ -202,25 +202,8 @@ def aggregate_skus(scan_id):
                     'critical': 0,
                     'warning': 0,
                     'info': 0,
-                    'issues_by_type': {},
                 }
             sku_data[sku][mapped] += 1
-
-            # Group issues by issue type for expandable rows
-            field_name = issue.get('field', '')
-            col_idx = col_headers.get(field_name, 0) or field_ids.get(field_name, 0)
-            col_letter = column_index_to_letter(col_idx)
-
-            if issue_type_label not in sku_data[sku]['issues_by_type']:
-                sku_data[sku]['issues_by_type'][issue_type_label] = {
-                    'severity': mapped,
-                    'issues': [],
-                }
-            sku_data[sku]['issues_by_type'][issue_type_label]['issues'].append({
-                'field': field_name,
-                'description': issue.get('details', ''),
-                'column_letter': col_letter,
-            })
 
     # Compute per-SKU health status
     for data in sku_data.values():
@@ -269,6 +252,74 @@ def aggregate_skus(scan_id):
         },
         'sku_table': sku_table,
     }
+
+
+# ---------------------------------------------------------------------------
+# Per-SKU issue details (for expandable rows)
+# ---------------------------------------------------------------------------
+
+def get_sku_issues(scan_id, sku):
+    """Get issues for a single SKU, grouped by issue type. Gated behind payment."""
+    db = get_db()
+    scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    if not scan:
+        return None
+
+    if scan['payment_status'] != 'paid':
+        return {'locked': True}
+
+    headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+    if isinstance(headers_raw, dict) and 'columns' in headers_raw:
+        col_headers = headers_raw['columns']
+        field_ids = headers_raw.get('field_ids', {})
+    else:
+        col_headers = headers_raw if isinstance(headers_raw, dict) else {}
+        field_ids = {}
+
+    # Check skip queries
+    rows = db.execute(
+        'SELECT query_name, issues_json FROM scan_results WHERE scan_id = ?',
+        (scan_id,)
+    ).fetchall()
+
+    query_names_run = [row['query_name'] for row in rows]
+    has_missing_any = 'missing-any-attributes' in query_names_run
+    skip_queries = set()
+    if has_missing_any:
+        skip_queries.add('missing-attributes')
+
+    issues_by_type = {}
+    for row in rows:
+        query_name = row['query_name']
+        if query_name in skip_queries:
+            continue
+
+        meta = QUERY_METADATA.get(query_name, {})
+        issue_type_label = meta.get('label', query_name)
+        raw_issues = json.loads(row['issues_json'])
+
+        for issue in raw_issues:
+            issue_sku = issue.get('sku', '')
+            if issue_sku != sku:
+                continue
+
+            mapped = SEVERITY_MAP.get(issue.get('severity', 'info'), 'info')
+            field_name = issue.get('field', '')
+            col_idx = col_headers.get(field_name, 0) or field_ids.get(field_name, 0)
+            col_letter = column_index_to_letter(col_idx)
+
+            if issue_type_label not in issues_by_type:
+                issues_by_type[issue_type_label] = {
+                    'severity': mapped,
+                    'issues': [],
+                }
+            issues_by_type[issue_type_label]['issues'].append({
+                'field': field_name,
+                'description': issue.get('details', ''),
+                'column_letter': col_letter,
+            })
+
+    return {'locked': False, 'issues_by_type': issues_by_type}
 
 
 # ---------------------------------------------------------------------------

@@ -85,7 +85,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ------- SKU Table with expandable rows -------
+    // Store SKU data for lazy loading
+    let skuList = [];
+    const skuIssuesLoaded = {};  // track which SKUs already fetched
+
     function renderSkuTable(skus) {
+        skuList = skus;
         const tbody = document.getElementById('sku-tbody');
         const countEl = document.getElementById('sku-table-count');
         countEl.textContent = `${skus.length} SKUs`;
@@ -118,19 +123,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 </td>
             </tr>`;
 
-            // Expandable detail row
+            // Expandable detail row (content loaded lazily)
             html += `<tr class="sku-detail-row" id="sku-detail-${idx}" style="display: none;">
-                <td colspan="7" style="padding: 0; border-bottom: 1px solid var(--border);">`;
+                <td colspan="7" style="padding: 0; border-bottom: 1px solid var(--border);">
+                    <div id="sku-detail-content-${idx}">`;
 
-            if (paymentStatus === 'paid') {
-                // PAID: Show grouped issues
-                html += renderPaidIssues(s.issues_by_type || {});
-            } else {
-                // FREE: Blurred preview with lock overlay
+            if (paymentStatus !== 'paid') {
+                // FREE: Blurred preview with lock overlay (rendered immediately)
                 html += renderLockedIssues(totalIssues);
+            } else {
+                // PAID: Show loading placeholder, fetch on expand
+                html += '<div class="sku-expand-panel" style="text-align: center; padding: 1.5rem;"><div class="spinner" style="margin: 0 auto;"></div></div>';
             }
 
-            html += `</td></tr>`;
+            html += `</div></td></tr>`;
         });
 
         tbody.innerHTML = html;
@@ -232,6 +238,27 @@ document.addEventListener('DOMContentLoaded', function () {
             detailRow.style.display = 'table-row';
             chevron.classList.add('open');
             mainRow.classList.add('expanded');
+
+            // Lazy-load issues for paid users on first expand
+            if (paymentStatus === 'paid' && !skuIssuesLoaded[idx]) {
+                skuIssuesLoaded[idx] = true;
+                const sku = skuList[idx].sku;
+                fetch(`/api/scan/${scanId}/sku-issues?sku=${encodeURIComponent(sku)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const container = document.getElementById(`sku-detail-content-${idx}`);
+                        if (data.locked) {
+                            const totalIssues = skuList[idx].critical + skuList[idx].warning + skuList[idx].info;
+                            container.innerHTML = renderLockedIssues(totalIssues);
+                        } else {
+                            container.innerHTML = renderPaidIssues(data.issues_by_type || {});
+                        }
+                    })
+                    .catch(() => {
+                        const container = document.getElementById(`sku-detail-content-${idx}`);
+                        container.innerHTML = '<div class="sku-expand-panel"><p class="text-critical" style="padding: 1rem; margin: 0;">Failed to load issues.</p></div>';
+                    });
+            }
         } else {
             detailRow.style.display = 'none';
             chevron.classList.remove('open');

@@ -3,7 +3,7 @@ import csv
 import json
 from flask import Blueprint, jsonify, request, make_response, current_app
 from ..database import get_db
-from ..services.aggregation_service import aggregate_skus, get_issue_details, QUERY_METADATA
+from ..services.aggregation_service import aggregate_skus, get_issue_details, get_sku_issues, QUERY_METADATA
 
 api_bp = Blueprint('api', __name__)
 
@@ -27,6 +27,18 @@ def issue_details(scan_id):
     per_page = current_app.config.get('RESULTS_PER_PAGE', 50)
 
     data = get_issue_details(scan_id, sku_filter, severity_filter, query_filter, page, per_page)
+    if data is None:
+        return jsonify({'error': 'Scan not found'}), 404
+    return jsonify(data)
+
+
+@api_bp.route('/scan/<int:scan_id>/sku-issues')
+def sku_issues(scan_id):
+    """Get issues for a single SKU, grouped by issue type. Paid only."""
+    sku = request.args.get('sku', '').strip()
+    if not sku:
+        return jsonify({'error': 'Missing sku parameter'}), 400
+    data = get_sku_issues(scan_id, sku)
     if data is None:
         return jsonify({'error': 'Scan not found'}), 404
     return jsonify(data)
