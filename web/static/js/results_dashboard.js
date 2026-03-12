@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(err => {
                 document.getElementById('detail-tbody').innerHTML =
-                    '<tr><td colspan="6" class="text-center text-critical" style="padding:2rem;">Failed to load issues.</td></tr>';
+                    '<tr><td colspan="5" class="text-center text-critical" style="padding:2rem;">Failed to load issues.</td></tr>';
             });
     }
 
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const countEl = document.getElementById('detail-total-count');
 
         if (!issues || !issues.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-dim" style="padding:2rem;">No issues match your filters.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-dim" style="padding:2rem;">No issues match your filters.</td></tr>';
             if (countEl) countEl.textContent = '';
             return;
         }
@@ -212,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${esc(i.issue_type)}</td>
                 <td><span class="badge-severity badge-${i.severity}">${i.severity_label}</span></td>
                 <td style="max-width: 300px;"><small>${esc(i.description)}</small></td>
-                <td>${i.column_letter ? `<code>${esc(i.column_letter)}</code>` : '<span class="text-dim">—</span>'}</td>
                 <td><small class="text-dim">${esc(i.technical_attribute || '')}</small></td>
             </tr>
         `).join('');
