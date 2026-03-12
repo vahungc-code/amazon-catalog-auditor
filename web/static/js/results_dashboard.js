@@ -53,11 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('health-score').textContent = score + '%';
         document.getElementById('health-score').style.color = color;
-        // Static label stays "CATALOG COMPLETENESS"
         document.getElementById('health-label').textContent = 'Catalog Completeness';
-        // Dynamic status line — colored to match the ring
-        document.getElementById('health-status').textContent = label;
-        document.getElementById('health-status').style.color = color;
 
         const fill = document.getElementById('health-fill');
         const circumference = 408.4; // 2 * PI * 65
