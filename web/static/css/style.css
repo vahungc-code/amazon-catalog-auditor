@@ -1,46 +1,46 @@
 /* ============================================================
-   Catalog Auditor — Dark Theme Design System
+   Catalog Auditor — Light Theme Design System
    ============================================================ */
 
 /* --- Design Tokens --- */
 :root {
-    --bg-primary: #0A0E1A;
-    --bg-surface: #111827;
-    --bg-surface-hover: #1a2332;
-    --bg-elevated: #1E293B;
-    --border: #1e2d45;
-    --border-light: #2a3a55;
+    --bg-primary: #F1F1F2;
+    --bg-surface: #FFFFFF;
+    --bg-surface-hover: #f7f7f8;
+    --bg-elevated: #F1F1F2;
+    --border: #D1D2D3;
+    --border-light: #e0e0e1;
 
-    --accent: #3B7FE8;
-    --accent-hover: #5a96f0;
-    --accent-soft: rgba(59, 127, 232, 0.12);
+    --accent: #1B75BB;
+    --accent-hover: #00ABE4;
+    --accent-soft: rgba(27, 117, 187, 0.1);
 
     --critical: #EF4444;
-    --critical-soft: rgba(239, 68, 68, 0.12);
+    --critical-soft: rgba(239, 68, 68, 0.08);
     --warning: #F59E0B;
-    --warning-soft: rgba(245, 158, 11, 0.12);
-    --info: #3B82F6;
-    --info-soft: rgba(59, 130, 246, 0.12);
+    --warning-soft: rgba(245, 158, 11, 0.08);
+    --info: #00ABE4;
+    --info-soft: rgba(0, 171, 228, 0.08);
     --success: #10B981;
-    --success-soft: rgba(16, 185, 129, 0.12);
+    --success-soft: rgba(16, 185, 129, 0.08);
 
-    --text: #F1F5F9;
-    --text-muted: #94A3B8;
-    --text-dim: #4A5568;
-    --text-inverse: #0A0E1A;
+    --text: #000000;
+    --text-muted: #555555;
+    --text-dim: #999999;
+    --text-inverse: #FFFFFF;
 
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 20px;
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(59, 127, 232, 0.15);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-glow: 0 0 20px rgba(27, 117, 187, 0.15);
 
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
+    --font-display: 'Montserrat', 'Avenir', sans-serif;
+    --font-body: 'Avenir', 'Montserrat', sans-serif;
 
     --transition: 0.2s ease;
 }
@@ -150,7 +150,7 @@ a:hover {
     border-left: 4px solid var(--info);
 }
 .alert-custom .btn-close {
-    filter: invert(1);
+    filter: none;
 }
 
 
@@ -703,7 +703,7 @@ a:hover {
 
 /* --- Forms --- */
 .form-control-dark {
-    background: var(--bg-elevated);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: var(--radius-sm);
@@ -712,7 +712,7 @@ a:hover {
     transition: border-color var(--transition);
 }
 .form-control-dark:focus {
-    background: var(--bg-elevated);
+    background: var(--bg-surface);
     border-color: var(--accent);
     color: var(--text);
     box-shadow: 0 0 0 3px var(--accent-soft);
@@ -723,13 +723,13 @@ a:hover {
 }
 
 .form-select-dark {
-    background: var(--bg-elevated);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: var(--radius-sm);
     font-size: 0.875rem;
     padding: 0.5rem 2rem 0.5rem 0.75rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555555' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     -webkit-appearance: none;
@@ -857,7 +857,7 @@ a:hover {
 .gap-md { gap: 0.75rem; }
 .gap-lg { gap: 1.25rem; }
 
-/* Code blocks in dark theme */
+/* Code blocks */
 code {
     background: var(--bg-elevated);
     color: var(--accent);
@@ -938,14 +938,14 @@ code {
 }
 
 
-/* --- Override Bootstrap dark mode defaults --- */
+/* --- Override Bootstrap defaults --- */
 .form-check-input:checked {
     background-color: var(--accent);
     border-color: var(--accent);
 }
 .form-check-input {
-    background-color: var(--bg-elevated);
-    border-color: var(--border-light);
+    background-color: var(--bg-surface);
+    border-color: var(--border);
 }
 
 .badge.bg-secondary {
