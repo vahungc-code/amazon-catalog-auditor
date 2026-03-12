@@ -431,11 +431,18 @@ a:hover {
     line-height: 1;
 }
 .health-ring-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.55rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 0.15rem;
+    letter-spacing: 0.08em;
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+}
+.health-ring-status {
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-top: 0.1rem;
+    line-height: 1;
 }
 
 
@@ -893,6 +900,12 @@ code {
     }
     .health-ring-score {
         font-size: 1.75rem;
+    }
+    .health-ring-label {
+        font-size: 0.45rem;
+    }
+    .health-ring-status {
+        font-size: 0.55rem;
     }
     .tabs-custom {
         overflow-x: auto;

@@ -60,7 +60,7 @@
             <div class="row g-3 mb-4">
                 <div class="col-md-3 d-flex justify-content-center align-items-center">
                     <div class="health-ring" id="health-ring" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                         title="Catalog Completeness Score — measures how complete your catalog is by calculating the percentage of required and conditional fields filled in across all your SKUs.">
+                         title="Percentage of required and conditional fields filled in across all your SKUs.">
                         <svg width="160" height="160" viewBox="0 0 160 160">
                             <circle class="health-ring-bg" cx="80" cy="80" r="65"/>
                             <circle class="health-ring-fill" cx="80" cy="80" r="65"
@@ -68,7 +68,8 @@
                         </svg>
                         <div class="health-ring-text">
                             <div class="health-ring-score" id="health-score">—</div>
-                            <div class="health-ring-label" id="health-label">Loading</div>
+                            <div class="health-ring-label" id="health-label">Catalog Completeness</div>
+                            <div class="health-ring-status" id="health-status"></div>
                         </div>
                     </div>
                 </div>

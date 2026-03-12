@@ -109,13 +109,13 @@ def compute_completeness(missing_field_issues, total_possible):
 def completeness_label(score):
     """Return (label, color) tuple for a completeness score."""
     if score >= 90:
-        return 'Complete', '#10B981'
+        return 'Catalog Healthy', '#10B981'
     elif score >= 70:
         return 'Mostly Complete', '#1B75BB'
     elif score >= 50:
-        return 'Partially Complete', '#F59E0B'
+        return 'Needs Completion', '#F59E0B'
     else:
-        return 'Needs Attention', '#EF4444'
+        return 'Critically Incomplete', '#EF4444'
 
 
 # ---------------------------------------------------------------------------
