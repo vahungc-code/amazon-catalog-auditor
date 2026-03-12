@@ -53,8 +53,9 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
         if selected_queries is None or instance.name in selected_queries:
             engine.register_query(instance)
 
-    # Get the true total listing count (no filtering) so the dashboard is accurate
-    all_listings = parser.get_listings(skip_parents=False, skip_examples=True, skip_fbm_duplicates=False)
+    # Get total active listing count (skip inactive/removed/blank status)
+    all_listings = parser.get_listings(skip_parents=False, skip_examples=True,
+                                       skip_fbm_duplicates=False, active_only=True)
     total_listings = len(all_listings)
 
     # Build SKU → title map for product name display

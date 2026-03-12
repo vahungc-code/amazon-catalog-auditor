@@ -26,7 +26,7 @@ class Listing:
 
 class CLRParser:
     """Parse Amazon Category Listing Reports"""
-    
+
     # Standard CLR row structure
     ROW_SETTINGS = 1
     ROW_INSTRUCTIONS = 2
@@ -35,6 +35,10 @@ class CLRParser:
     ROW_FIELD_IDS = 5
     ROW_EXAMPLE = 6
     ROW_DATA_START = 7
+
+    # Amazon-controlled fields: these depend on Amazon, not the seller.
+    # Exclude from completeness score and missing-attribute checks.
+    AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title'}
     
     def __init__(self, clr_file_path: str):
         """Load and parse CLR file"""
@@ -121,30 +125,42 @@ class CLRParser:
         
         return definitions
     
+    def _is_amazon_controlled(self, field_name: str) -> bool:
+        """Check if a field is Amazon-controlled (not editable by sellers).
+        Matches field names like 'listing_status', '::listing_status', 'title', '::title'.
+        """
+        normalized = field_name.strip().lstrip(':').lower()
+        return normalized in self.AMAZON_CONTROLLED_FIELDS
+
     def get_required_fields(self) -> List[str]:
-        """Get list of required field names"""
+        """Get list of required field names (excluding Amazon-controlled fields)"""
         return [
-            field_name 
+            field_name
             for field_name, definition in self.field_definitions.items()
             if definition['required'] == 'required'
+            and not self._is_amazon_controlled(field_name)
         ]
-    
+
     def get_conditional_fields(self) -> List[str]:
-        """Get list of conditionally required field names"""
+        """Get list of conditionally required field names (excluding Amazon-controlled fields)"""
         return [
-            field_name 
+            field_name
             for field_name, definition in self.field_definitions.items()
             if 'conditional' in definition['required'].lower()
+            and not self._is_amazon_controlled(field_name)
         ]
     
-    def get_listings(self, skip_parents: bool = True, skip_examples: bool = True, skip_fbm_duplicates: bool = True) -> List[Listing]:
+    def get_listings(self, skip_parents: bool = True, skip_examples: bool = True,
+                     skip_fbm_duplicates: bool = True, active_only: bool = True) -> List[Listing]:
         """
         Extract all listings from CLR
-        
+
         Args:
             skip_parents: Skip parent SKUs (variations)
             skip_examples: Skip example/dummy rows
-        
+            skip_fbm_duplicates: Skip FBM duplicates when FBA version exists
+            active_only: Only include listings with "Active" status
+
         Returns:
             List of normalized Listing objects
         """
@@ -182,11 +198,16 @@ class CLRParser:
             
             status = self._get_cell_value(row, col_status)
             parentage = self._get_cell_value(row, col_parentage)
-            
+
             # Skip parents if requested
             if skip_parents and parentage and 'parent' in parentage.lower():
                 continue
-            
+
+            # Skip non-active listings (Removed, Inactive, blank, etc.)
+            if active_only:
+                if not status or status.strip().lower() != 'active':
+                    continue
+
             # Extract all fields
             all_fields = {}
             for header_name, col_idx in self.headers.items():
