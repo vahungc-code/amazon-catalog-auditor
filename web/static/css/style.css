@@ -99,39 +99,38 @@ a:hover {
     font-size: 1.25rem;
     color: var(--text);
     letter-spacing: -0.02em;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
 }
 .navbar-dark-custom .navbar-brand:hover {
     color: var(--accent);
+}
+.navbar-dark-custom .navbar-brand i {
+    color: var(--accent);
+}
+
+.navbar-brand-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    transition: color var(--transition);
 }
 .navbar-dark-custom .navbar-brand:hover .navbar-brand-title {
     color: var(--accent);
 }
 
-.navbar-logo {
-    height: 32px;
-    width: 32px;
+.navbar-oss-logo {
+    height: 14px;
     object-fit: contain;
-    flex-shrink: 0;
+    margin-top: 1px;
+    opacity: 0.7;
+    transition: opacity var(--transition);
 }
-
-.navbar-brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.1;
-}
-.navbar-brand-title {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    transition: color var(--transition);
-}
-.navbar-brand-sub {
-    font-size: 0.6rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    letter-spacing: 0.02em;
+.navbar-dark-custom .navbar-brand:hover .navbar-oss-logo {
+    opacity: 1;
 }
 
 .navbar-dark-custom .nav-link {

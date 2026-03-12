@@ -21,12 +21,12 @@
 <body>
     <nav class="navbar-dark-custom">
         <div class="container d-flex align-items-center justify-content-between">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='images/OSS logo simple transparent-05.png') }}" alt="OSS" class="navbar-logo">
-                <div class="navbar-brand-text">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-box-seam"></i>
                     <span class="navbar-brand-title">Catalog Auditor</span>
-                    <span class="navbar-brand-sub">by Online Seller Solutions</span>
                 </div>
+                <img src="{{ url_for('static', filename='images/OSS LOGO 2022-transparent.png') }}" alt="Online Seller Solutions" class="navbar-oss-logo">
             </a>
             <div class="d-flex align-items-center gap-3">
                 <a class="nav-link" href="{{ url_for('main.index') }}">
@@ -55,9 +55,9 @@
     </main>
 
     <footer class="footer-dark text-center">
-        <div class="container d-flex align-items-center justify-content-center gap-2">
-            <img src="{{ url_for('static', filename='images/OSS logo simple transparent-05.png') }}" alt="OSS" style="height: 18px; width: 18px; object-fit: contain;">
-            <span>Catalog Auditor v2.0 &middot; Online Seller Solutions</span>
+        <div class="container d-flex flex-column align-items-center gap-1">
+            <img src="{{ url_for('static', filename='images/OSS LOGO 2022-transparent.png') }}" alt="Online Seller Solutions" style="height: 20px; object-fit: contain;">
+            <span>Catalog Auditor v2.0</span>
         </div>
     </footer>
 
