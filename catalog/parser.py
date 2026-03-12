@@ -41,7 +41,8 @@ class CLRParser:
     # - listing_status: controlled by Amazon (Active/Inactive/Removed)
     # - title: controlled by Amazon (the display title)
     # - contribution_sku: the SKU itself — always present if the row exists
-    AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku'}
+    # - record_action: internal Amazon action flag, not a seller attribute
+    AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku', 'record_action'}
     
     def __init__(self, clr_file_path: str):
         """Load and parse CLR file"""
