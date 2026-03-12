@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const severityOrder = { critical: 0, warning: 1, info: 2 };
         const sortedTypes = Object.entries(issuesByType).sort((a, b) => {
-            return (severityOrder[a[1].severity] || 2) - (severityOrder[b[1].severity] || 2);
+            return (severityOrder[a[1].severity] ?? 2) - (severityOrder[b[1].severity] ?? 2);
         });
 
         let html = '<div class="sku-expand-panel">';
