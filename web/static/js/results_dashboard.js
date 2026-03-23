@@ -106,9 +106,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // Main row
             html += `
             <tr class="sku-row" data-sku-idx="${idx}" onclick="toggleSkuRow(${idx})">
-                <td><code class="copyable" title="Click to copy SKU" onclick="copyToClipboard('${esc(s.sku).replace(/'/g, "\\'")}', event)">${esc(s.sku)}</code></td>
+                <td><code class="copyable" title="Click to copy SKU" onclick="copyToClipboard('${esc(s.sku).replace(/'/g, "\\'")}')"><i class="bi bi-copy copy-icon"></i>${esc(s.sku)}</code></td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <span class="copyable" title="Click to copy product name" onclick="copyToClipboard('${esc(s.product_name).replace(/'/g, "\\'")}', event)">${esc(s.product_name)}</span></td>
+                    <span class="copyable" title="Click to copy product name" onclick="copyToClipboard('${esc(s.product_name).replace(/'/g, "\\'")}')"><i class="bi bi-copy copy-icon"></i>${esc(s.product_name)}</span></td>
                 <td class="text-end">${s.critical > 0 ? `<span class="text-critical">${s.critical}</span>` : '<span class="text-dim">0</span>'}</td>
                 <td class="text-end">${s.warning > 0 ? `<span class="text-warning-custom">${s.warning}</span>` : '<span class="text-dim">0</span>'}</td>
                 <td class="text-end">${s.info > 0 ? `<span class="text-info-custom">${s.info}</span>` : '<span class="text-dim">0</span>'}</td>
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="issue-field-name">${esc(issue.description || issue.field)}</div>
                             ${issue.field ? `<div class="issue-field-attr copyable" title="Click to copy attribute name" onclick="copyToClipboard('${esc(issue.field).replace(/'/g, "\\'")}', event)">${esc(issue.field)}</div>` : ''}
                         </div>
-                        ${issue.column_letter ? `<span class="issue-col-badge">${esc(issue.column_letter)}</span>` : ''}
+                        ${issue.column_letter ? `<div class="issue-col-wrapper"><span class="issue-col-label">Col</span><span class="issue-col-badge">${esc(issue.column_letter)}</span></div>` : ''}
                     </div>`;
             });
 
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let copyToastTimer = null;
 
     window.copyToClipboard = function (text, event) {
-        if (event) event.stopPropagation();
+        if (event) event.stopPropagation();  // Only stop propagation when explicitly passed (e.g. inside expanded issue rows)
         navigator.clipboard.writeText(text).then(() => {
             copyToast.textContent = 'Copied!';
             copyToast.classList.add('show');
