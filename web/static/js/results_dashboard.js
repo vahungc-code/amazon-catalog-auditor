@@ -277,12 +277,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // ------- CTA Banner -------
     function renderCTA(data) {
         const banner = document.getElementById('cta-banner');
-        if (paymentStatus === 'paid') {
-            banner.style.display = 'none';
-            return;
-        }
         const title = document.getElementById('cta-title');
         const subtitle = document.getElementById('cta-subtitle');
+        const buttons = document.getElementById('cta-buttons');
+
+        if (paymentStatus === 'paid') {
+            title.textContent = 'Need help fixing these issues?';
+            subtitle.textContent = 'Book a free consultation and we\'ll walk through your report together.';
+            buttons.innerHTML = `
+                <a href="https://link.onlinesellersolutions.com/widget/booking/fpP0m7doqOMdYjOBrJi7" target="_blank" class="btn-accent btn-lg">
+                    <i class="bi bi-calendar-check"></i> Book a Consultation
+                </a>`;
+            return;
+        }
         title.textContent = `Your catalog has ${data.critical_issues.toLocaleString()} critical issues across ${data.affected_skus.toLocaleString()} SKUs`;
         subtitle.textContent = 'Unlock the full report to see every issue with fix instructions and flat-file column references.';
     }
