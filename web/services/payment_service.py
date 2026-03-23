@@ -117,17 +117,6 @@ def send_report_email(to_email, scan_id, report_url):
     from sendgrid import SendGridAPIClient
     from sendgrid.helpers.mail import Mail, Email, To, Content
 
-    message = Mail(
-        from_email=Email(from_email, 'Catalog Auditor'),
-        to_emails=To(to_email),
-        subject=f'Your Catalog Audit Report is Ready (Scan #{scan_id})',
-    )
-    message.dynamic_template_data = {
-        'report_url': report_url,
-        'scan_id': scan_id,
-    }
-
-    # Plain HTML email (no dynamic template required)
     html_content = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">
         <h2 style="color: #111; font-size: 1.4rem; margin-bottom: 0.5rem;">Your Full Report is Ready</h2>
@@ -147,10 +136,17 @@ def send_report_email(to_email, scan_id, report_url):
         </p>
     </div>
     """
-    message.content = [Content('text/html', html_content)]
+
+    message = Mail(
+        from_email=Email(from_email, 'Catalog Auditor'),
+        to_emails=To(to_email),
+        subject=f'Your Catalog Audit Report is Ready (Scan #{scan_id})',
+        html_content=Content('text/html', html_content),
+    )
 
     sg = SendGridAPIClient(api_key)
-    sg.send(message)
+    response = sg.send(message)
+    current_app.logger.info(f'[sendgrid] status={response.status_code} body={response.body}')
 
 
 def verify_webhook_signature(payload, sig_header):

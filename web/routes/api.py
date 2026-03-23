@@ -171,8 +171,8 @@ def send_report_email_route(scan_id):
 
         return jsonify({'success': True})
     except Exception as e:
-        current_app.logger.error(f'Failed to send report email: {e}')
-        return jsonify({'error': 'Failed to send email. Please try again.'}), 500
+        current_app.logger.error(f'Failed to send report email: {type(e).__name__}: {e}')
+        return jsonify({'error': f'Failed to send email: {e}'}), 500
 
 
 @api_bp.route('/scan/<int:scan_id>/export/json')
