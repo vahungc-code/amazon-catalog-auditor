@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button class="btn-accent" onclick="event.stopPropagation(); startCheckout();">
                             <i class="bi bi-unlock"></i> Unlock Full Report
                         </button>
-                        <a href="#" class="btn-outline-accent" onclick="event.stopPropagation();">
+                        <a href="https://link.onlinesellersolutions.com/widget/booking/fpP0m7doqOMdYjOBrJi7" target="_blank" class="btn-outline-accent" onclick="event.stopPropagation();">
                             <i class="bi bi-calendar-check"></i> Book a Consultation
                         </a>
                     </div>
