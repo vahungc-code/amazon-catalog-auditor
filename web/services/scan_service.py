@@ -7,7 +7,6 @@ from catalog.queries import (
     TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    NewAttributesQuery,
 )
 from ..database import get_db
 
@@ -17,7 +16,6 @@ ALL_QUERY_CLASSES = [
     TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    NewAttributesQuery,
 ]
 
 

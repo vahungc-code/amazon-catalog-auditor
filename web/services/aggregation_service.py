@@ -62,12 +62,6 @@ QUERY_METADATA = {
         'example': 'e.g. same product in 3 sizes listed separately',
         'group': 'insights',
     },
-    'new-attributes': {
-        'label': 'Unused Template Attributes',
-        'description': 'Finds newer Amazon attributes in your product template that haven\'t been filled yet.',
-        'example': 'e.g. sustainability features, safety certifications',
-        'group': 'insights',
-    },
 }
 
 # Group ordering for display

@@ -13,7 +13,6 @@ from .queries import (
     TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    NewAttributesQuery
 )
 
 
@@ -158,7 +157,6 @@ def _register_queries(engine: QueryEngine):
     engine.register_query(TitlePolicyViolationsQuery())
     engine.register_query(RufusBulletsQuery())
     engine.register_query(ProhibitedCharsQuery())
-    engine.register_query(NewAttributesQuery())
 
 
 if __name__ == '__main__':
