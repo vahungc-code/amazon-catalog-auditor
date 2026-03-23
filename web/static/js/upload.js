@@ -1,16 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('clr-file');
     const fileInfo = document.getElementById('file-info');
     const fileName = document.getElementById('file-name');
     const uploadBtn = document.getElementById('upload-btn');
+    const submitBtn = document.getElementById('submit-btn');
 
-    if (!dropZone || !fileInput) return;
-
-    // Click to browse
-    dropZone.addEventListener('click', function () {
-        fileInput.click();
-    });
+    if (!fileInput) return;
 
     // File selected via input
     fileInput.addEventListener('change', function () {
@@ -19,35 +14,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Drag and drop
-    dropZone.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', function () {
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', function (e) {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        if (e.dataTransfer.files.length > 0) {
-            const file = e.dataTransfer.files[0];
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (ext === 'xlsx' || ext === 'xlsm') {
-                fileInput.files = e.dataTransfer.files;
-                showFile(file);
-            } else {
-                alert('Only .xlsx and .xlsm files are supported.');
-            }
-        }
-    });
-
     function showFile(file) {
         fileName.textContent = file.name + ' (' + formatSize(file.size) + ')';
         fileInfo.classList.remove('d-none');
-        uploadBtn.disabled = false;
+        // Hide the "Upload Your CLR File" label, show the submit button
+        if (uploadBtn) uploadBtn.classList.add('d-none');
+        if (submitBtn) {
+            submitBtn.classList.remove('d-none');
+            submitBtn.disabled = false;
+        }
     }
 
     function formatSize(bytes) {

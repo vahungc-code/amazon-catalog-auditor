@@ -1254,6 +1254,56 @@ code {
     margin: 0 auto;
     padding: 0 1.5rem;
 }
+.hero-copy {
+    padding-top: 2rem;
+}
+.hero-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+}
+.hero-h1 em {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 400;
+}
+.hero-sub {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.8;
+    max-width: 520px;
+    margin-bottom: 0.75rem;
+}
+.hero-privacy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    margin-bottom: 2rem;
+}
+.hero-upload-form {
+    margin-bottom: 1rem;
+}
+.hero-upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+.hero-upload-btns {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
 .hero-demo {
     position: relative;
     padding: 1rem 0;
