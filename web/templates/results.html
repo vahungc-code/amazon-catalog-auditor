@@ -22,9 +22,6 @@
         </div>
         <div class="d-flex gap-sm" id="export-buttons">
             {% if payment_status == 'paid' %}
-            <a href="{{ url_for('api.export_json', scan_id=scan.id) }}" class="btn-ghost">
-                <i class="bi bi-filetype-json"></i> JSON
-            </a>
             <a href="{{ url_for('api.export_csv', scan_id=scan.id) }}" class="btn-ghost">
                 <i class="bi bi-filetype-csv"></i> CSV
             </a>
