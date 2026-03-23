@@ -4,12 +4,9 @@ from catalog.query_engine import QueryEngine
 from catalog.queries import (
     MissingAttributesQuery,
     MissingAnyAttributesQuery,
-    LongTitlesQuery,
-    TitleProhibitedCharsQuery,
+    TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    ProductTypeMismatchQuery,
-    MissingVariationsQuery,
     NewAttributesQuery,
 )
 from ..database import get_db
@@ -17,12 +14,9 @@ from ..database import get_db
 ALL_QUERY_CLASSES = [
     MissingAttributesQuery,
     MissingAnyAttributesQuery,
-    LongTitlesQuery,
-    TitleProhibitedCharsQuery,
+    TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    ProductTypeMismatchQuery,
-    MissingVariationsQuery,
     NewAttributesQuery,
 ]
 

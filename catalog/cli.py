@@ -10,12 +10,9 @@ from .output import format_terminal, format_json, format_csv, print_summary, con
 from .queries import (
     MissingAttributesQuery,
     MissingAnyAttributesQuery,
-    LongTitlesQuery,
-    TitleProhibitedCharsQuery,
+    TitlePolicyViolationsQuery,
     RufusBulletsQuery,
     ProhibitedCharsQuery,
-    ProductTypeMismatchQuery,
-    MissingVariationsQuery,
     NewAttributesQuery
 )
 
@@ -158,12 +155,9 @@ def _register_queries(engine: QueryEngine):
     """Register all available query plugins"""
     engine.register_query(MissingAttributesQuery())
     engine.register_query(MissingAnyAttributesQuery())
-    engine.register_query(LongTitlesQuery())
-    engine.register_query(TitleProhibitedCharsQuery())
+    engine.register_query(TitlePolicyViolationsQuery())
     engine.register_query(RufusBulletsQuery())
     engine.register_query(ProhibitedCharsQuery())
-    engine.register_query(ProductTypeMismatchQuery())
-    engine.register_query(MissingVariationsQuery())
     engine.register_query(NewAttributesQuery())
 
 

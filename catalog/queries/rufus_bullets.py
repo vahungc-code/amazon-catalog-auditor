@@ -38,8 +38,8 @@ VAGUE_MARKETING_PHRASES = [
 class RufusBulletsQuery(QueryPlugin):
     """Evaluate bullet points against RUFUS optimization framework"""
     
-    name = "rufus-bullets"
-    description = "Evaluate bullet points against Amazon's RUFUS AI optimization framework"
+    name = "bullets-content-quality"
+    description = "Evaluate bullet point content quality across length, specificity, and structure"
     
     def execute(self, listings, clr_parser):
         issues = []
@@ -83,9 +83,9 @@ class RufusBulletsQuery(QueryPlugin):
                 issues.append({
                     'row': listing.row_number,
                     'sku': listing.sku,
-                    'field': 'Overall RUFUS Score',
+                    'field': 'Overall Bullet Score',
                     'severity': 'info',
-                    'details': f"Average RUFUS score: {avg_score:.1f}/5 - {tier}",
+                    'details': f"Average bullet score: {avg_score:.1f}/5 - {tier}",
                     'product_type': listing.product_type,
                     'avg_score': round(avg_score, 1),
                     'tier': tier,
@@ -122,14 +122,14 @@ class RufusBulletsQuery(QueryPlugin):
             tier = score_data['tier'].split('—')[0].strip()  # Extract just "Good", "Fair", etc.
             tier_counts[tier] = tier_counts.get(tier, 0) + 1
         
-        summary_text = f"Overall catalog RUFUS score: {avg_all:.1f}/5. "
+        summary_text = f"Overall catalog bullet score: {avg_all:.1f}/5. "
         summary_text += "Distribution: "
         summary_text += ", ".join([f"{count} {tier}" for tier, count in sorted(tier_counts.items())])
         
         return {
             'row': 0,
             'sku': 'SUMMARY',
-            'field': 'RUFUS Summary',
+            'field': 'Bullets Content Quality Summary',
             'severity': 'info',
             'details': summary_text,
             'product_type': '',

@@ -44,22 +44,16 @@ QUERY_METADATA = {
         'example': 'e.g. SUPPLEMENT listed as BEVERAGE',
         'group': 'recommended',
     },
-    'title-prohibited-chars': {
-        'label': 'Title Prohibited Characters',
-        'description': 'Checks titles specifically for characters Amazon doesn\'t allow, which can prevent title updates from saving.',
-        'example': 'e.g. ! $ ? _ { } ^ \u00ac \u00a6',
+    'title-policy-violations': {
+        'label': 'Title Policy Violations',
+        'description': 'Checks titles for policy violations: length over 200 characters, or characters Amazon doesn\'t allow.',
+        'example': 'e.g. title too long, contains ! $ ? _ { } ^ ¬ ¦',
         'group': 'recommended',
     },
-    'rufus-bullets': {
-        'label': 'Bullet Point Quality (RUFUS)',
-        'description': 'Evaluates bullet points against Amazon\'s RUFUS AI framework \u2014 the engine powering Amazon\'s shopping assistant.',
+    'bullets-content-quality': {
+        'label': 'Bullets Content Quality',
+        'description': 'Evaluates bullet point content quality across length, specificity, and structure.',
         'example': 'e.g. feature clarity, benefit language, specificity',
-        'group': 'insights',
-    },
-    'long-titles': {
-        'label': 'Title Length Issues',
-        'description': 'Flags titles over 200 characters. Long titles are truncated in search results and hurt click-through rate.',
-        'example': 'Amazon recommends 80\u2013150 characters',
         'group': 'insights',
     },
     'missing-variations': {
