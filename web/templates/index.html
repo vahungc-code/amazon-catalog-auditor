@@ -3,13 +3,15 @@
 {% block title %}Catalog Auditor — Find What's Holding Your Listings Back{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-7 col-xl-6">
-        <div class="text-center mb-4" style="margin-top: 2rem;">
+<!-- Hero: 2-column layout -->
+<div class="hero-grid">
+    <!-- Left: copy + upload -->
+    <div>
+        <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
             <h1 class="fw-800" style="font-size: 2rem; letter-spacing: -0.03em;">
                 Find what's holding your listings back
             </h1>
-            <p class="text-muted-custom mt-2" style="font-size: 0.95rem; max-width: 480px; margin: 0 auto;">
+            <p class="text-muted-custom mt-2" style="font-size: 0.95rem; max-width: 480px;">
                 Upload your Amazon Category Listing Report and get an instant catalog health audit.
                 <br><span class="text-dim" style="font-size: 0.8rem;">Your file is analyzed locally and never stored.</span>
             </p>
@@ -34,30 +36,28 @@
             </form>
         </div>
 
-        <div class="d-flex flex-wrap justify-content-center gap-sm mb-4">
-            <span class="feature-pill"><i class="bi bi-search"></i> 5 Audit Checks</span>
-            <span class="feature-pill"><i class="bi bi-grid-3x3-gap"></i> SKU-level Breakdown</span>
-            <span class="feature-pill"><i class="bi bi-download"></i> Export to CSV</span>
-            <span class="feature-pill"><i class="bi bi-shield-check"></i> Your Data Stays Private</span>
-        </div>
+    </div>
 
-        <!-- Find My Report -->
-        <div class="text-center mb-4">
-            <a href="#" class="text-dim" style="font-size: 0.8rem; text-decoration: none;"
-               onclick="event.preventDefault(); document.getElementById('find-report-section').classList.toggle('d-none');">
-                <i class="bi bi-key"></i> Already paid? Find your report
-            </a>
-            <div id="find-report-section" class="d-none mt-3">
-                <form action="{{ url_for('main.find_report') }}" method="POST"
-                      class="d-flex justify-content-center gap-sm" style="max-width: 400px; margin: 0 auto;">
-                    <input type="email" name="email" required placeholder="Email used at checkout"
-                           class="form-control" style="font-size: 0.85rem; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.75rem; border-radius: 6px; flex: 1;">
-                    <button type="submit" class="btn-accent" style="font-size: 0.85rem; white-space: nowrap;">
-                        <i class="bi bi-search"></i> Find
-                    </button>
-                </form>
-            </div>
+    <!-- Right: demo screenshots -->
+    <div class="hero-demo">
+        <div class="demo-card">
+            <img src="{{ url_for('static', filename='images/Demo.png') }}" alt="Catalog audit overview showing health score, affected SKUs, and issue distribution">
         </div>
+        <div class="demo-card demo-card--overlap">
+            <img src="{{ url_for('static', filename='images/Demo 1.png') }}" alt="Detailed SKU issues with column references and fix guidance">
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TRUST STRIP
+═══════════════════════════════════════ -->
+<div class="trust-strip">
+    <div class="trust-inner">
+        <div class="trust-chip"><span class="trust-check">&#10003;</span> 5 Audit Checks</div>
+        <div class="trust-chip"><span class="trust-check">&#10003;</span> SKU-level Breakdown</div>
+        <div class="trust-chip"><span class="trust-check">&#10003;</span> Export to CSV</div>
+        <div class="trust-chip"><span class="trust-check">&#10003;</span> Your Data Stays Private</div>
     </div>
 </div>
 

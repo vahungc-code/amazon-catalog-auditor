@@ -39,8 +39,9 @@
     --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
     --shadow-glow: 0 0 20px rgba(27, 117, 187, 0.15);
 
-    --font-display: 'Montserrat', 'Avenir', sans-serif;
-    --font-body: 'Avenir', 'Montserrat', sans-serif;
+    --font-display: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 
     --transition: 0.2s ease;
 }
@@ -1242,6 +1243,110 @@ code {
 
 
 /* ============================================================
+   Hero Grid & Demo
+   ============================================================ */
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+.hero-demo {
+    position: relative;
+    padding: 1rem 0;
+}
+.demo-card {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border-light);
+    background: var(--bg-surface);
+}
+.demo-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.demo-card--overlap {
+    margin-top: -3rem;
+    margin-left: 2rem;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 960px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    .hero-demo {
+        order: -1;
+    }
+    .demo-card--overlap {
+        margin-left: 1rem;
+        margin-top: -2rem;
+    }
+}
+
+/* ============================================================
+   Trust Strip
+   ============================================================ */
+.trust-strip {
+    padding: 1.1rem 0;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    /* Break out of Bootstrap container */
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+}
+.trust-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.trust-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1.75rem;
+    border-right: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+}
+.trust-chip:last-child {
+    border-right: none;
+}
+.trust-check {
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .trust-inner {
+        flex-direction: column;
+        align-items: center;
+    }
+    .trust-chip {
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding: 0.5rem 1rem;
+    }
+    .trust-chip:last-child {
+        border-bottom: none;
+    }
+}
+
+/* ============================================================
    Landing Page Sections
    ============================================================ */
 
@@ -1249,6 +1354,12 @@ code {
     padding: 5rem 0;
     border-top: 1px solid var(--border-light);
     background: var(--bg-surface);
+    /* Break out of Bootstrap container */
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+    position: relative;
+    left: 0;
 }
 .lp-section--alt {
     background: var(--bg-primary);
@@ -1270,9 +1381,10 @@ code {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.15em;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--accent);
     background: var(--accent-soft);
@@ -1291,9 +1403,9 @@ code {
     margin-bottom: 0.75rem;
 }
 .lp-h2 em {
-    font-style: italic;
+    font-style: normal;
     color: var(--accent);
-    font-weight: 400;
+    font-weight: 700;
 }
 .lp-lead {
     font-size: 1rem;
@@ -1332,9 +1444,10 @@ code {
 .checks-dot--warning { background: var(--warning); }
 .checks-dot--info { background: var(--accent); }
 .checks-col-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text);
 }
@@ -1343,6 +1456,7 @@ code {
     color: var(--text-dim);
     margin-left: auto;
     white-space: nowrap;
+    font-family: var(--font-mono);
 }
 .checks-items {
     padding: 0.85rem 1.25rem 1.25rem;
@@ -1424,8 +1538,9 @@ code {
     align-items: center;
     justify-content: center;
     margin: 0 auto 1rem;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-muted);
     transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
@@ -1489,8 +1604,9 @@ code {
     gap: 0.45rem;
 }
 .privacy-tag {
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
     letter-spacing: 0.06em;
     padding: 0.25rem 0.7rem;
     background: var(--accent-soft);
