@@ -17,6 +17,9 @@ class Config:
     STRIPE_PRICE_AMOUNT = int(os.environ.get('STRIPE_PRICE_AMOUNT', '999'))  # in cents ($9.99)
     STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')
 
+    # Public base URL (used for email links generated outside of request context)
+    BASE_URL = os.environ.get('BASE_URL', 'https://flatfileoptimizer.com')
+
     # SendGrid configuration
     SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
     SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'reports@onlinesellersolutions.com')

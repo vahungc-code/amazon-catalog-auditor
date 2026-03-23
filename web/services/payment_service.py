@@ -88,8 +88,11 @@ def handle_checkout_completed(event_data):
     # Send report link email
     if customer_email:
         try:
-            report_url = url_for('scan.view_results', scan_id=int(scan_id), _external=True)
+            base_url = current_app.config.get('BASE_URL', '').rstrip('/')
+            report_url = f"{base_url}/scan/{int(scan_id)}"
+            current_app.logger.info(f'Sending report email to {customer_email} — {report_url}')
             send_report_email(customer_email, int(scan_id), report_url)
+            current_app.logger.info(f'Report email sent successfully to {customer_email}')
         except Exception as e:
             current_app.logger.error(f'Failed to send report email to {customer_email}: {e}')
 
