@@ -40,6 +40,24 @@
             <span class="feature-pill"><i class="bi bi-download"></i> Export to CSV</span>
             <span class="feature-pill"><i class="bi bi-shield-check"></i> Your Data Stays Private</span>
         </div>
+
+        <!-- Find My Report -->
+        <div class="text-center mb-4">
+            <a href="#" class="text-dim" style="font-size: 0.8rem; text-decoration: none;"
+               onclick="event.preventDefault(); document.getElementById('find-report-section').classList.toggle('d-none');">
+                <i class="bi bi-key"></i> Already paid? Find your report
+            </a>
+            <div id="find-report-section" class="d-none mt-3">
+                <form action="{{ url_for('main.find_report') }}" method="POST"
+                      class="d-flex justify-content-center gap-sm" style="max-width: 400px; margin: 0 auto;">
+                    <input type="email" name="email" required placeholder="Email used at checkout"
+                           class="form-control" style="font-size: 0.85rem; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.75rem; border-radius: 6px; flex: 1;">
+                    <button type="submit" class="btn-accent" style="font-size: 0.85rem; white-space: nowrap;">
+                        <i class="bi bi-search"></i> Find
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

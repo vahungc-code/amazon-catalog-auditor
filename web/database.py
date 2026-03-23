@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS scans (
     payment_status  TEXT NOT NULL DEFAULT 'free',
     stripe_session_id TEXT,
     stripe_payment_intent TEXT,
+    customer_email  TEXT,
     headers_json    TEXT NOT NULL DEFAULT '{}',
     sku_names_json  TEXT NOT NULL DEFAULT '{}'
 );
@@ -41,6 +42,7 @@ MIGRATIONS = [
     "ALTER TABLE scans ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'free'",
     "ALTER TABLE scans ADD COLUMN stripe_session_id TEXT",
     "ALTER TABLE scans ADD COLUMN stripe_payment_intent TEXT",
+    "ALTER TABLE scans ADD COLUMN customer_email TEXT",
     "ALTER TABLE scans ADD COLUMN headers_json TEXT NOT NULL DEFAULT '{}'",
     "ALTER TABLE scans ADD COLUMN sku_names_json TEXT NOT NULL DEFAULT '{}'",
 ]

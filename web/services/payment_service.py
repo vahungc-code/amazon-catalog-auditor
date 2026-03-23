@@ -1,5 +1,6 @@
 """
-Payment service — Stripe checkout session creation and webhook verification.
+Payment service — Stripe checkout session creation, webhook verification,
+and post-payment email via SendGrid.
 """
 
 import stripe
@@ -59,7 +60,7 @@ def create_checkout_session(scan_id):
 
 def handle_checkout_completed(event_data):
     """Process a checkout.session.completed webhook event.
-    Marks the scan as paid.
+    Marks the scan as paid, saves customer email, and sends report link.
     """
     session_obj = event_data
     scan_id = session_obj.get('metadata', {}).get('scan_id')
@@ -67,13 +68,80 @@ def handle_checkout_completed(event_data):
     if not scan_id:
         return False
 
+    # Extract customer email from Stripe session
+    customer_email = (
+        session_obj.get('customer_email')
+        or session_obj.get('customer_details', {}).get('email', '')
+    )
+
     db = get_db()
     db.execute(
-        "UPDATE scans SET payment_status = 'paid', stripe_payment_intent = ? WHERE id = ?",
-        (session_obj.get('payment_intent', ''), int(scan_id))
+        """UPDATE scans
+           SET payment_status = 'paid',
+               stripe_payment_intent = ?,
+               customer_email = ?
+           WHERE id = ?""",
+        (session_obj.get('payment_intent', ''), customer_email, int(scan_id))
     )
     db.commit()
+
+    # Send report link email
+    if customer_email:
+        try:
+            report_url = url_for('scan.view_results', scan_id=int(scan_id), _external=True)
+            send_report_email(customer_email, int(scan_id), report_url)
+        except Exception as e:
+            current_app.logger.error(f'Failed to send report email to {customer_email}: {e}')
+
     return True
+
+
+def send_report_email(to_email, scan_id, report_url):
+    """Send the report link to the customer via SendGrid."""
+    api_key = current_app.config.get('SENDGRID_API_KEY', '')
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL', '')
+
+    if not api_key or not from_email:
+        current_app.logger.warning('SendGrid not configured — skipping report email.')
+        return
+
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail, Email, To, Content
+
+    message = Mail(
+        from_email=Email(from_email, 'Catalog Auditor'),
+        to_emails=To(to_email),
+        subject=f'Your Catalog Audit Report is Ready (Scan #{scan_id})',
+    )
+    message.dynamic_template_data = {
+        'report_url': report_url,
+        'scan_id': scan_id,
+    }
+
+    # Plain HTML email (no dynamic template required)
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">
+        <h2 style="color: #111; font-size: 1.4rem; margin-bottom: 0.5rem;">Your Full Report is Ready</h2>
+        <p style="color: #555; font-size: 0.95rem; line-height: 1.6;">
+            Thanks for unlocking your catalog audit. You can access your full report anytime using the link below.
+        </p>
+        <p style="margin: 1.5rem 0;">
+            <a href="{report_url}"
+               style="display: inline-block; background: #1B75BB; color: #fff; text-decoration: none;
+                      padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem;">
+                View Your Report
+            </a>
+        </p>
+        <p style="color: #888; font-size: 0.8rem; line-height: 1.5;">
+            Bookmark this link so you can come back to it anytime.<br>
+            Scan #{scan_id} &mdash; Catalog Auditor by Online Seller Solutions
+        </p>
+    </div>
+    """
+    message.content = [Content('text/html', html_content)]
+
+    sg = SendGridAPIClient(api_key)
+    sg.send(message)
 
 
 def verify_webhook_signature(payload, sig_header):

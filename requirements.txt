@@ -4,3 +4,4 @@ rich>=13.0.0
 flask>=3.0.0
 gunicorn>=22.0.0
 stripe>=7.0.0
+sendgrid>=6.0.0

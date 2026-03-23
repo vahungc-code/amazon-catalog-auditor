@@ -24,6 +24,34 @@ def index():
     return render_template('index.html')
 
 
+@main_bp.route('/find-report', methods=['POST'])
+def find_report():
+    email = request.form.get('email', '').strip().lower()
+    if not email:
+        flash('Please enter your email address.', 'error')
+        return redirect(url_for('main.index'))
+
+    from ..database import get_db
+    db = get_db()
+    scans = db.execute(
+        """SELECT id, filename, created_at FROM scans
+           WHERE LOWER(customer_email) = ? AND payment_status = 'paid'
+           ORDER BY created_at DESC""",
+        (email,)
+    ).fetchall()
+
+    if not scans:
+        flash('No paid reports found for that email. Please check the address you used at checkout.', 'error')
+        return redirect(url_for('main.index'))
+
+    if len(scans) == 1:
+        return redirect(url_for('scan.view_results', scan_id=scans[0]['id']))
+
+    # Multiple reports — redirect to most recent, flash info
+    flash(f'Found {len(scans)} reports for {email}. Showing the most recent.', 'info')
+    return redirect(url_for('scan.view_results', scan_id=scans[0]['id']))
+
+
 @main_bp.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('clr_file')

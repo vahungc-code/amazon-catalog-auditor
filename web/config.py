@@ -16,3 +16,7 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
     STRIPE_PRICE_AMOUNT = int(os.environ.get('STRIPE_PRICE_AMOUNT', '999'))  # in cents ($9.99)
     STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')
+
+    # SendGrid configuration
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
+    SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'reports@onlinesellersolutions.com')
