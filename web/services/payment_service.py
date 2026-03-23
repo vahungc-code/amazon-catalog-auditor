@@ -64,8 +64,10 @@ def handle_checkout_completed(event_data):
     """
     session_obj = event_data
     scan_id = session_obj.get('metadata', {}).get('scan_id')
+    current_app.logger.info(f'[webhook] handle_checkout_completed called, scan_id={scan_id}')
 
     if not scan_id:
+        current_app.logger.warning('[webhook] No scan_id in metadata')
         return False
 
     # Extract customer email from Stripe session
@@ -73,6 +75,7 @@ def handle_checkout_completed(event_data):
         session_obj.get('customer_email')
         or session_obj.get('customer_details', {}).get('email', '')
     )
+    current_app.logger.info(f'[webhook] scan_id={scan_id}, customer_email={customer_email}')
 
     db = get_db()
     db.execute(
@@ -84,17 +87,20 @@ def handle_checkout_completed(event_data):
         (session_obj.get('payment_intent', ''), customer_email, int(scan_id))
     )
     db.commit()
+    current_app.logger.info(f'[webhook] Scan {scan_id} marked as paid')
 
     # Send report link email
     if customer_email:
         try:
             base_url = current_app.config.get('BASE_URL', '').rstrip('/')
             report_url = f"{base_url}/scan/{int(scan_id)}"
-            current_app.logger.info(f'Sending report email to {customer_email} — {report_url}')
+            current_app.logger.info(f'[webhook] Sending report email to {customer_email} — {report_url}')
             send_report_email(customer_email, int(scan_id), report_url)
-            current_app.logger.info(f'Report email sent successfully to {customer_email}')
+            current_app.logger.info(f'[webhook] Report email sent successfully to {customer_email}')
         except Exception as e:
-            current_app.logger.error(f'Failed to send report email to {customer_email}: {e}')
+            current_app.logger.error(f'[webhook] Failed to send report email to {customer_email}: {e}')
+    else:
+        current_app.logger.warning(f'[webhook] No customer email found for scan {scan_id}')
 
     return True
 

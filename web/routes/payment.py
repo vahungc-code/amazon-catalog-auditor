@@ -65,11 +65,15 @@ def stripe_webhook():
         current_app.logger.error(f'Webhook signature verification failed: {e}')
         return jsonify({'error': 'Signature verification failed'}), 400
 
+    current_app.logger.info(f'[webhook] Received event type: {event["type"]}')
+
     if event['type'] == 'checkout.session.completed':
         session_data = event['data']['object']
         success = handle_checkout_completed(session_data)
         if not success:
-            current_app.logger.warning('Webhook: could not find scan_id in session metadata')
+            current_app.logger.warning('[webhook] Could not find scan_id in session metadata')
             return jsonify({'error': 'No scan_id in metadata'}), 400
+    else:
+        current_app.logger.info(f'[webhook] Ignoring event type: {event["type"]}')
 
     return jsonify({'status': 'ok'}), 200
