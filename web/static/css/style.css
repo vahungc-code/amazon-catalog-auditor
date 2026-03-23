@@ -1248,13 +1248,14 @@ code {
 .lp-section {
     padding: 5rem 0;
     border-top: 1px solid var(--border-light);
+    background: var(--bg-surface);
 }
 .lp-section--alt {
-    background: var(--bg-surface);
+    background: var(--bg-primary);
 }
 .lp-section--cta {
     padding: 6rem 0;
-    background: var(--bg-surface);
+    background: var(--bg-primary);
     position: relative;
 }
 .lp-wrap {
@@ -1312,7 +1313,7 @@ code {
     overflow: hidden;
 }
 .checks-col {
-    background: var(--bg-primary);
+    background: var(--bg-surface);
 }
 .checks-col-header {
     padding: 1rem 1.25rem 0.85rem;
