@@ -28,6 +28,9 @@
             <a href="{{ url_for('api.export_csv', scan_id=scan.id) }}" class="btn-ghost">
                 <i class="bi bi-filetype-csv"></i> CSV
             </a>
+            <button class="btn-ghost" onclick="sendReportEmail()" id="btn-send-email">
+                <i class="bi bi-envelope"></i> Send to Email
+            </button>
             <a href="https://link.onlinesellersolutions.com/widget/booking/fpP0m7doqOMdYjOBrJi7" target="_blank" class="btn-outline-accent" style="font-size: 0.85rem;">
                 <i class="bi bi-calendar-check"></i> Book a Consultation
             </a>

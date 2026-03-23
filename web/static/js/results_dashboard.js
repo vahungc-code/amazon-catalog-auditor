@@ -317,6 +317,40 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     };
 
+    // ------- Send Report to Email -------
+    window.sendReportEmail = function () {
+        const email = prompt('Enter the email address to send the report link to:');
+        if (!email || !email.includes('@')) return;
+
+        const btn = document.getElementById('btn-send-email');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.4rem;"></span> Sending...';
+        }
+
+        fetch(`/api/scan/${scanId}/send-report-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (btn) btn.innerHTML = '<i class="bi bi-check-lg"></i> Sent!';
+                    setTimeout(() => {
+                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-envelope"></i> Send to Email'; }
+                    }, 3000);
+                } else {
+                    alert(data.error || 'Failed to send email.');
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-envelope"></i> Send to Email'; }
+                }
+            })
+            .catch(() => {
+                alert('Failed to send email.');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-envelope"></i> Send to Email'; }
+            });
+    };
+
     // ------- Payment polling (if pending) -------
     const hasCheckPayment = new URLSearchParams(window.location.search).get('check_payment');
     if ((paymentStatus === 'pending' || hasCheckPayment) && paymentStatus !== 'paid') {

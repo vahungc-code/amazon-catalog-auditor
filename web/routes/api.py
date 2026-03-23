@@ -143,6 +143,38 @@ def search_issues(scan_id):
     })
 
 
+@api_bp.route('/scan/<int:scan_id>/send-report-email', methods=['POST'])
+def send_report_email_route(scan_id):
+    """Send the report link to an email address. Paid scans only."""
+    db = get_db()
+    scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    if not scan:
+        return jsonify({'error': 'Scan not found'}), 404
+    if scan['payment_status'] != 'paid':
+        return jsonify({'error': 'Report must be unlocked first'}), 403
+
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email or '@' not in email:
+        return jsonify({'error': 'Invalid email address'}), 400
+
+    try:
+        from ..services.payment_service import send_report_email
+        base_url = current_app.config.get('BASE_URL', '').rstrip('/')
+        report_url = f"{base_url}/scan/{scan_id}"
+        send_report_email(email, scan_id, report_url)
+
+        # Also save email on the scan if not already set
+        if not scan['customer_email']:
+            db.execute('UPDATE scans SET customer_email = ? WHERE id = ?', (email, scan_id))
+            db.commit()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        current_app.logger.error(f'Failed to send report email: {e}')
+        return jsonify({'error': 'Failed to send email. Please try again.'}), 500
+
+
 @api_bp.route('/scan/<int:scan_id>/export/json')
 def export_json(scan_id):
     db = get_db()
