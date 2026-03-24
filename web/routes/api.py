@@ -217,6 +217,8 @@ def export_json(scan_id):
 
 @api_bp.route('/scan/<int:scan_id>/export/csv')
 def export_csv(scan_id):
+    from ..services.aggregation_service import column_index_to_letter, QUERY_METADATA
+
     db = get_db()
     scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
     if not scan:
@@ -226,27 +228,54 @@ def export_csv(scan_id):
     if scan['payment_status'] != 'paid':
         return jsonify({'error': 'Unlock the full report to export results'}), 403
 
+    # Load column headers and SKU names
+    headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+    if isinstance(headers_raw, dict) and 'columns' in headers_raw:
+        col_headers = headers_raw['columns']
+        field_ids = headers_raw.get('field_ids', {})
+    else:
+        col_headers = headers_raw if isinstance(headers_raw, dict) else {}
+        field_ids = {}
+
+    sku_names = json.loads(scan['sku_names_json']) if scan['sku_names_json'] else {}
+
     rows = db.execute(
         'SELECT * FROM scan_results WHERE scan_id = ?', (scan_id,)
     ).fetchall()
 
-    si = io.StringIO()
-    fieldnames = ['query', 'row', 'sku', 'field', 'severity', 'details', 'product_type']
-    writer = csv.DictWriter(si, fieldnames=fieldnames)
-    writer.writeheader()
-
+    # Collect all issues with enriched data
+    all_issues = []
     for row in rows:
+        query_name = row['query_name']
+        meta = QUERY_METADATA.get(query_name, {})
+        check_label = meta.get('label', query_name)
         issues = json.loads(row['issues_json'])
         for issue in issues:
-            writer.writerow({
-                'query': row['query_name'],
-                'row': issue.get('row', ''),
-                'sku': issue.get('sku', ''),
-                'field': issue.get('field', ''),
+            sku = issue.get('sku', '')
+            if sku == 'SUMMARY':
+                continue
+            field_name = issue.get('field', '')
+            col_idx = col_headers.get(field_name, 0) or field_ids.get(field_name, 0)
+            col_letter = column_index_to_letter(col_idx)
+            all_issues.append({
                 'severity': issue.get('severity', ''),
+                'sku': sku,
+                'query': query_name,
+                'column': col_letter,
+                'attribute': field_name,
                 'details': issue.get('details', ''),
-                'product_type': issue.get('product_type', '')
             })
+
+    # Sort by SKU, then severity (critical first), then query name
+    severity_order = {'critical': 0, 'required': 0, 'warning': 1, 'info': 2}
+    all_issues.sort(key=lambda x: (x['sku'], severity_order.get(x['severity'], 9), x['query']))
+
+    si = io.StringIO()
+    fieldnames = ['severity', 'sku', 'query', 'column', 'attribute', 'details']
+    writer = csv.DictWriter(si, fieldnames=fieldnames)
+    writer.writeheader()
+    for issue in all_issues:
+        writer.writerow(issue)
 
     response = make_response(si.getvalue())
     response.headers['Content-Type'] = 'text/csv'
