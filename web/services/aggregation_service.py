@@ -246,14 +246,15 @@ def aggregate_skus(scan_id):
 # Per-SKU issue details (for expandable rows)
 # ---------------------------------------------------------------------------
 
-def get_sku_issues(scan_id, sku):
-    """Get issues for a single SKU, grouped by issue type. Gated behind payment."""
+def get_sku_issues(scan_id, sku, allow_preview=False):
+    """Get issues for a single SKU, grouped by issue type. Gated behind payment.
+    allow_preview=True bypasses the gate for the free preview SKU (first/worst SKU)."""
     db = get_db()
     scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
     if not scan:
         return None
 
-    if scan['payment_status'] != 'paid':
+    if scan['payment_status'] != 'paid' and not allow_preview:
         return {'locked': True}
 
     headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}

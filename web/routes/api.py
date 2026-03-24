@@ -34,11 +34,12 @@ def issue_details(scan_id):
 
 @api_bp.route('/scan/<int:scan_id>/sku-issues')
 def sku_issues(scan_id):
-    """Get issues for a single SKU, grouped by issue type. Paid only."""
+    """Get issues for a single SKU, grouped by issue type. Paid or free preview for first SKU."""
     sku = request.args.get('sku', '').strip()
+    preview = request.args.get('preview', '').strip() == '1'
     if not sku:
         return jsonify({'error': 'Missing sku parameter'}), 400
-    data = get_sku_issues(scan_id, sku)
+    data = get_sku_issues(scan_id, sku, allow_preview=preview)
     if data is None:
         return jsonify({'error': 'Scan not found'}), 404
     return jsonify(data)

@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Main row
             html += `
             <tr class="sku-row" data-sku-idx="${idx}" onclick="toggleSkuRow(${idx})">
-                <td><code class="copyable" title="Click to copy SKU" onclick="copyToClipboard('${esc(s.sku).replace(/'/g, "\\'")}')"><i class="bi bi-copy copy-icon"></i>${esc(s.sku)}</code></td>
+                <td><code class="copyable" title="Click to copy SKU" onclick="copyToClipboard('${esc(s.sku).replace(/'/g, "\\'")}')"><i class="bi bi-copy copy-icon"></i>${esc(s.sku)}</code>${paymentStatus !== 'paid' && idx === 0 ? ' <span class="badge-free-preview">FREE PREVIEW</span>' : ''}</td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <span class="copyable" title="Click to copy product name" onclick="copyToClipboard('${esc(s.product_name).replace(/'/g, "\\'")}')"><i class="bi bi-copy copy-icon"></i>${esc(s.product_name)}</span></td>
                 <td class="text-end">${s.critical > 0 ? `<span class="text-critical">${s.critical}</span>` : '<span class="text-dim">0</span>'}</td>
@@ -128,11 +128,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td colspan="7" style="padding: 0; border-bottom: 1px solid var(--border);">
                     <div id="sku-detail-content-${idx}">`;
 
-            if (paymentStatus !== 'paid') {
+            if (paymentStatus !== 'paid' && idx !== 0) {
                 // FREE: Blurred preview with lock overlay (rendered immediately)
                 html += renderLockedIssues(totalIssues);
             } else {
-                // PAID: Show loading placeholder, fetch on expand
+                // PAID or first SKU (free preview): Show loading placeholder, fetch on expand
                 html += '<div class="sku-expand-panel" style="text-align: center; padding: 1.5rem;"><div class="spinner" style="margin: 0 auto;"></div></div>';
             }
 
@@ -239,11 +239,12 @@ document.addEventListener('DOMContentLoaded', function () {
             chevron.classList.add('open');
             mainRow.classList.add('expanded');
 
-            // Lazy-load issues for paid users on first expand
-            if (paymentStatus === 'paid' && !skuIssuesLoaded[idx]) {
+            // Lazy-load issues for paid users (or first SKU free preview) on first expand
+            if ((paymentStatus === 'paid' || idx === 0) && !skuIssuesLoaded[idx]) {
                 skuIssuesLoaded[idx] = true;
                 const sku = skuList[idx].sku;
-                fetch(`/api/scan/${scanId}/sku-issues?sku=${encodeURIComponent(sku)}`)
+                const previewParam = (paymentStatus !== 'paid' && idx === 0) ? '&preview=1' : '';
+                fetch(`/api/scan/${scanId}/sku-issues?sku=${encodeURIComponent(sku)}${previewParam}`)
                     .then(r => r.json())
                     .then(data => {
                         const container = document.getElementById(`sku-detail-content-${idx}`);
