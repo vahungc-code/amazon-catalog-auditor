@@ -88,7 +88,7 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
     for r in results:
         for issue in r.issues:
             sku = issue.get('sku')
-            if sku:
+            if sku and sku not in ('N/A', 'SUMMARY'):
                 all_affected_skus.add(sku)
     total_affected = len(all_affected_skus)
 
