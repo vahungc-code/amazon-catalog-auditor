@@ -23,3 +23,6 @@ class Config:
     # SendGrid configuration
     SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
     SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'reports@onlinesellersolutions.com')
+
+    # Admin notification email (receives payment alerts)
+    NOTIFICATION_EMAIL = os.environ.get('NOTIFICATION_EMAIL', '')

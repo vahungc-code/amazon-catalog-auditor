@@ -89,6 +89,12 @@ def handle_checkout_completed(event_data):
     db.commit()
     current_app.logger.info(f'[webhook] Scan {scan_id} marked as paid')
 
+    # Notify admin of the new payment
+    try:
+        send_payment_notification(int(scan_id), customer_email)
+    except Exception as e:
+        current_app.logger.error(f'[webhook] Failed to send admin notification: {e}')
+
     # Send report link email
     if customer_email:
         try:
@@ -147,6 +153,55 @@ def send_report_email(to_email, scan_id, report_url):
     sg = SendGridAPIClient(api_key)
     response = sg.send(message)
     current_app.logger.info(f'[sendgrid] status={response.status_code} body={response.body}')
+
+
+def send_payment_notification(scan_id, customer_email):
+    """Send a notification email to the admin when a payment is received."""
+    api_key = current_app.config.get('SENDGRID_API_KEY', '')
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL', '')
+    notify_email = current_app.config.get('NOTIFICATION_EMAIL', '')
+
+    if not api_key or not from_email or not notify_email:
+        current_app.logger.info('[notify] Admin notification skipped — NOTIFICATION_EMAIL not configured.')
+        return
+
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail, Email, To, Content
+
+    amount = current_app.config.get('STRIPE_PRICE_AMOUNT', 999)
+    amount_display = f"${amount / 100:.2f}"
+    base_url = current_app.config.get('BASE_URL', '').rstrip('/')
+    report_url = f"{base_url}/scan/{scan_id}"
+
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">
+        <h2 style="color: #111; font-size: 1.4rem; margin-bottom: 0.5rem;">New Payment Received</h2>
+        <table style="color: #333; font-size: 0.95rem; line-height: 1.8; border-collapse: collapse;">
+            <tr><td style="padding-right: 1rem; color: #888;">Scan</td><td>#{scan_id}</td></tr>
+            <tr><td style="padding-right: 1rem; color: #888;">Amount</td><td>{amount_display}</td></tr>
+            <tr><td style="padding-right: 1rem; color: #888;">Customer</td><td>{customer_email or 'N/A'}</td></tr>
+        </table>
+        <p style="margin: 1.5rem 0;">
+            <a href="{report_url}"
+               style="display: inline-block; background: #1B75BB; color: #fff; text-decoration: none;
+                      padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+                View Report
+            </a>
+        </p>
+        <p style="color: #888; font-size: 0.8rem;">Catalog Auditor by Online Seller Solutions</p>
+    </div>
+    """
+
+    message = Mail(
+        from_email=Email(from_email, 'Catalog Auditor'),
+        to_emails=To(notify_email),
+        subject=f'New Payment — Scan #{scan_id} ({amount_display})',
+        html_content=Content('text/html', html_content),
+    )
+
+    sg = SendGridAPIClient(api_key)
+    response = sg.send(message)
+    current_app.logger.info(f'[notify] Admin notification sent, status={response.status_code}')
 
 
 def verify_webhook_signature(payload, sig_header):
