@@ -63,10 +63,8 @@ def handle_checkout_completed(event_data):
     Marks the scan as paid, saves customer email, and sends report link.
     """
     session_obj = event_data
-    # Use Stripe's built-in serialisation to get a plain dict
-    session_dict = session_obj.to_dict() if hasattr(session_obj, 'to_dict') else session_obj
-    metadata = session_dict.get('metadata') or {}
-    scan_id = metadata.get('scan_id')
+    # Access Stripe object fields via bracket notation (works across SDK versions)
+    scan_id = session_obj['metadata']['scan_id'] if 'metadata' in session_obj and 'scan_id' in session_obj['metadata'] else None
     current_app.logger.info(f'[webhook] handle_checkout_completed called, scan_id={scan_id}')
 
     if not scan_id:
@@ -74,12 +72,14 @@ def handle_checkout_completed(event_data):
         return False
 
     # Extract customer email from Stripe session
-    customer_details = session_dict.get('customer_details') or {}
-    customer_email = (
-        session_dict.get('customer_email')
-        or customer_details.get('email', '')
-    )
+    customer_email = ''
+    if 'customer_email' in session_obj and session_obj['customer_email']:
+        customer_email = session_obj['customer_email']
+    elif 'customer_details' in session_obj and session_obj['customer_details'] and 'email' in session_obj['customer_details']:
+        customer_email = session_obj['customer_details']['email']
     current_app.logger.info(f'[webhook] scan_id={scan_id}, customer_email={customer_email}')
+
+    payment_intent = session_obj['payment_intent'] if 'payment_intent' in session_obj else ''
 
     db = get_db()
     db.execute(
@@ -88,7 +88,7 @@ def handle_checkout_completed(event_data):
                stripe_payment_intent = ?,
                customer_email = ?
            WHERE id = ?""",
-        (session_dict.get('payment_intent', ''), customer_email, int(scan_id))
+        (payment_intent, customer_email, int(scan_id))
     )
     db.commit()
     current_app.logger.info(f'[webhook] Scan {scan_id} marked as paid')
