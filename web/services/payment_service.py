@@ -63,9 +63,9 @@ def handle_checkout_completed(event_data):
     Marks the scan as paid, saves customer email, and sends report link.
     """
     session_obj = event_data
-    # Convert Stripe object to dict so .get() works reliably
-    session_dict = dict(session_obj)
-    metadata = dict(session_dict.get('metadata', {}))
+    # Use Stripe's built-in serialisation to get a plain dict
+    session_dict = session_obj.to_dict() if hasattr(session_obj, 'to_dict') else session_obj
+    metadata = session_dict.get('metadata') or {}
     scan_id = metadata.get('scan_id')
     current_app.logger.info(f'[webhook] handle_checkout_completed called, scan_id={scan_id}')
 
@@ -74,7 +74,7 @@ def handle_checkout_completed(event_data):
         return False
 
     # Extract customer email from Stripe session
-    customer_details = dict(session_dict.get('customer_details', {})) if session_dict.get('customer_details') else {}
+    customer_details = session_dict.get('customer_details') or {}
     customer_email = (
         session_dict.get('customer_email')
         or customer_details.get('email', '')
