@@ -44,6 +44,12 @@ class CLRParser:
     # - record_action: internal Amazon action flag, not a seller attribute
     AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku', 'record_action'}
 
+    # Known translations of "Active" status across CLR languages
+    ACTIVE_STATUS_VALUES = {
+        'active', 'attiva', 'attivo', 'aktiv', 'activo', 'activa',
+        'actif', 'active', 'ativo', 'ativa', 'アクティブ', '有效', 'نشط',
+    }
+
     # Mapping from Row 5 field ID prefixes (always English) to logical column names.
     # Used to resolve columns regardless of the Row 4 display language.
     FIELD_ID_TO_COLUMN = {
@@ -158,6 +164,17 @@ class CLRParser:
 
         return field_ids
 
+    @staticmethod
+    def _field_id_base(field_id: str) -> str:
+        """Extract the base field name from a Row 5 field ID.
+        e.g. 'parentage_level[marketplace_id=APJ6JRA9NG5V4]#1.value' → 'parentage_level'
+             'contribution_sku#1.value' → 'contribution_sku'
+             '::listing_status' → '::listing_status'
+        """
+        # Strip [marketplace_id=...] brackets, then #N.value suffixes
+        base = field_id.split('[')[0].split('#')[0].split('.')[0]
+        return base
+
     def _build_column_map(self) -> Dict[str, int]:
         """Build a logical column map using Row 5 field IDs (always English).
         Maps logical English names (e.g. 'SKU', 'Status') to column indices.
@@ -166,8 +183,7 @@ class CLRParser:
 
         # First, resolve from Row 5 field IDs
         for field_id, col_idx in self.field_ids.items():
-            # Strip suffixes like #1.value, #2.value to get the base field name
-            base = field_id.split('#')[0].split('.')[0]
+            base = self._field_id_base(field_id)
             if base in self.FIELD_ID_TO_COLUMN:
                 logical_name = self.FIELD_ID_TO_COLUMN[base]
                 # Keep the first match (lowest column index) for each logical name
@@ -176,7 +192,7 @@ class CLRParser:
 
         # Also resolve bullet points from Row 5 field IDs
         for field_id, col_idx in self.field_ids.items():
-            base = field_id.split('#')[0].split('.')[0]
+            base = self._field_id_base(field_id)
             if base == 'bullet_point':
                 # Extract the number from e.g. bullet_point#1.value
                 try:
@@ -323,7 +339,7 @@ class CLRParser:
 
             # Skip non-active listings (Removed, Inactive, blank, etc.)
             if active_only:
-                if not status or status.strip().lower() != 'active':
+                if not status or status.strip().lower() not in self.ACTIVE_STATUS_VALUES:
                     continue
 
             # Extract all fields — index by:
