@@ -44,19 +44,78 @@ class CLRParser:
     # - record_action: internal Amazon action flag, not a seller attribute
     AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku', 'record_action'}
     
+    # Known translations of the "Template" sheet name across Amazon CLR languages
+    TEMPLATE_SHEET_NAMES = [
+        'Template',           # English
+        'Modello',            # Italian
+        'Vorlage',            # German
+        'Plantilla',          # Spanish
+        'Modèle',             # French
+        'Modelo',             # Portuguese
+        'テンプレート',          # Japanese
+        '模板',                # Chinese
+        'قالب',               # Arabic
+    ]
+
+    # Known translations of the "Data Definitions" sheet name
+    DATA_DEFINITIONS_SHEET_NAMES = [
+        'Data Definitions',
+        'Definizioni dati',           # Italian
+        'Datendefinitionen',          # German
+        'Definiciones de datos',      # Spanish
+        'Définitions de données',     # French
+        'Definições de dados',        # Portuguese
+        'データ定義',                   # Japanese
+        '数据定义',                     # Chinese
+        'تعريفات البيانات',             # Arabic
+    ]
+
     def __init__(self, clr_file_path: str):
         """Load and parse CLR file"""
         self.file_path = clr_file_path
         self.workbook = openpyxl.load_workbook(clr_file_path, data_only=True, read_only=True)
-        
-        # Load sheets
-        self.template_sheet = self.workbook['Template']
+
+        # Load sheets (language-agnostic lookup)
+        self.template_sheet = self._find_template_sheet()
         
         # Parse structure
         self.headers = self._extract_headers()
         self.field_ids = self._extract_field_ids()
         self.field_definitions = self._extract_field_definitions()
         
+    def _find_template_sheet(self):
+        """Find the Template sheet regardless of language.
+        Tries known translations first, then falls back to the first sheet
+        that isn't a Data Definitions sheet."""
+        for name in self.TEMPLATE_SHEET_NAMES:
+            if name in self.workbook.sheetnames:
+                return self.workbook[name]
+
+        # Fallback: pick the first sheet that isn't a known Data Definitions name
+        dd_names = set(n.lower() for n in self.DATA_DEFINITIONS_SHEET_NAMES)
+        for name in self.workbook.sheetnames:
+            if name.lower() not in dd_names:
+                return self.workbook[name]
+
+        raise KeyError(
+            f"Could not find a Template sheet. Available sheets: {self.workbook.sheetnames}"
+        )
+
+    def _find_data_definitions_sheet(self):
+        """Find the Data Definitions sheet regardless of language.
+        Returns None if not found."""
+        for name in self.DATA_DEFINITIONS_SHEET_NAMES:
+            if name in self.workbook.sheetnames:
+                return self.workbook[name]
+
+        # Fallback: pick a sheet that isn't the template sheet
+        template_name = self.template_sheet.title
+        for name in self.workbook.sheetnames:
+            if name != template_name:
+                return self.workbook[name]
+
+        return None
+
     def _extract_headers(self) -> Dict[str, int]:
         """Extract column headers and their positions"""
         headers = {}
@@ -83,50 +142,47 @@ class CLRParser:
     def _extract_field_definitions(self) -> Dict[str, Dict]:
         """Extract field definitions from Data Definitions sheet"""
         definitions = {}
-        
-        try:
-            dd_sheet = self.workbook['Data Definitions']
-            
-            # Find header row (usually row 1, but scan first 5)
-            header_row_idx = None
-            for i in range(1, 6):
-                row = dd_sheet[i]
-                if any(cell.value and 'field name' in str(cell.value).lower() for cell in row):
-                    header_row_idx = i
-                    break
-            
-            if not header_row_idx:
-                return definitions
-            
-            # Extract headers
-            dd_headers = {}
-            for idx, cell in enumerate(dd_sheet[header_row_idx], start=1):
-                if cell.value:
-                    dd_headers[str(cell.value).strip().lower()] = idx
-            
-            # Extract definitions
-            for row in dd_sheet.iter_rows(min_row=header_row_idx + 1):
-                field_name_idx = dd_headers.get('field name')
-                required_idx = dd_headers.get('required?')
-                
-                if not field_name_idx:
-                    continue
-                
-                field_name = row[field_name_idx - 1].value
-                if not field_name:
-                    continue
-                
-                required = row[required_idx - 1].value if required_idx else None
-                
-                definitions[str(field_name).strip()] = {
-                    'required': str(required).strip().lower() if required else '',
-                    'field_name': str(field_name).strip()
-                }
-        
-        except KeyError:
-            # No Data Definitions sheet
-            pass
-        
+
+        dd_sheet = self._find_data_definitions_sheet()
+        if dd_sheet is None:
+            return definitions
+
+        # Find header row (usually row 1, but scan first 5)
+        header_row_idx = None
+        for i in range(1, 6):
+            row = dd_sheet[i]
+            if any(cell.value and 'field name' in str(cell.value).lower() for cell in row):
+                header_row_idx = i
+                break
+
+        if not header_row_idx:
+            return definitions
+
+        # Extract headers
+        dd_headers = {}
+        for idx, cell in enumerate(dd_sheet[header_row_idx], start=1):
+            if cell.value:
+                dd_headers[str(cell.value).strip().lower()] = idx
+
+        # Extract definitions
+        for row in dd_sheet.iter_rows(min_row=header_row_idx + 1):
+            field_name_idx = dd_headers.get('field name')
+            required_idx = dd_headers.get('required?')
+
+            if not field_name_idx:
+                continue
+
+            field_name = row[field_name_idx - 1].value
+            if not field_name:
+                continue
+
+            required = row[required_idx - 1].value if required_idx else None
+
+            definitions[str(field_name).strip()] = {
+                'required': str(required).strip().lower() if required else '',
+                'field_name': str(field_name).strip()
+            }
+
         return definitions
     
     def _is_amazon_controlled(self, field_name: str) -> bool:
