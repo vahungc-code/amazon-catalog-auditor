@@ -67,8 +67,9 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
     total_possible = total_listings * total_checkable_fields
 
     headers_data = {
-        'columns': parser.headers,
+        'columns': parser.columns,
         'field_ids': parser.field_ids,
+        'display_headers': parser.headers,
         'total_checkable_fields': total_checkable_fields,
         'total_possible': total_possible,
         'num_required': len(required_fields),

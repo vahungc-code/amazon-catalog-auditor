@@ -359,7 +359,7 @@ def get_issue_details(scan_id, sku_filter='', severity_filter='', query_filter='
                 continue
 
             field_name = issue.get('field', '')
-            # Try Template column headers first, then Data Definitions field IDs
+            # Try resolved columns first, then field IDs, then display headers
             col_idx = headers.get(field_name, 0) or field_ids.get(field_name, 0)
             col_letter = column_index_to_letter(col_idx)
 

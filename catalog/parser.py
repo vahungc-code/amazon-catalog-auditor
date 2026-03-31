@@ -43,6 +43,20 @@ class CLRParser:
     # - contribution_sku: the SKU itself — always present if the row exists
     # - record_action: internal Amazon action flag, not a seller attribute
     AMAZON_CONTROLLED_FIELDS = {'listing_status', 'title', 'contribution_sku', 'record_action'}
+
+    # Mapping from Row 5 field ID prefixes (always English) to logical column names.
+    # Used to resolve columns regardless of the Row 4 display language.
+    FIELD_ID_TO_COLUMN = {
+        'contribution_sku':        'SKU',
+        '::listing_status':        'Status',
+        '::title':                 'Title',
+        'product_type':            'Product Type',
+        'item_type_keyword':       'Item Type Keyword',
+        'brand':                   'Brand',
+        'parentage_level':         'Parentage',
+        'child_parent_sku_relationship': 'Parent SKU',
+        '::record_action':         'Record Action',
+    }
     
     # Known translations of the "Template" sheet name across Amazon CLR languages
     TEMPLATE_SHEET_NAMES = [
@@ -79,8 +93,13 @@ class CLRParser:
         self.template_sheet = self._find_template_sheet()
         
         # Parse structure
-        self.headers = self._extract_headers()
-        self.field_ids = self._extract_field_ids()
+        # Row 4 = display headers (translated), Row 5 = field IDs (always English)
+        self.headers = self._extract_headers()       # Row 4 display names → col index
+        self.field_ids = self._extract_field_ids()    # Row 5 field IDs → col index
+        # Resolved column map: logical English name → col index (uses Row 5 first, Row 4 fallback)
+        self.columns = self._build_column_map()
+        # Display names: col index → Row 4 display name (for UI, may be translated)
+        self.display_names = {idx: name for name, idx in self.headers.items()}
         self.field_definitions = self._extract_field_definitions()
         
     def _find_template_sheet(self):
@@ -138,6 +157,40 @@ class CLRParser:
                 field_ids[str(cell.value).strip()] = idx
 
         return field_ids
+
+    def _build_column_map(self) -> Dict[str, int]:
+        """Build a logical column map using Row 5 field IDs (always English).
+        Maps logical English names (e.g. 'SKU', 'Status') to column indices.
+        Falls back to Row 4 headers for anything not matched via Row 5."""
+        columns = {}
+
+        # First, resolve from Row 5 field IDs
+        for field_id, col_idx in self.field_ids.items():
+            # Strip suffixes like #1.value, #2.value to get the base field name
+            base = field_id.split('#')[0].split('.')[0]
+            if base in self.FIELD_ID_TO_COLUMN:
+                logical_name = self.FIELD_ID_TO_COLUMN[base]
+                # Keep the first match (lowest column index) for each logical name
+                if logical_name not in columns:
+                    columns[logical_name] = col_idx
+
+        # Also resolve bullet points from Row 5 field IDs
+        for field_id, col_idx in self.field_ids.items():
+            base = field_id.split('#')[0].split('.')[0]
+            if base == 'bullet_point':
+                # Extract the number from e.g. bullet_point#1.value
+                try:
+                    num = int(field_id.split('#')[1].split('.')[0])
+                    columns[f'Bullet Point {num}'] = col_idx
+                except (IndexError, ValueError):
+                    pass
+
+        # Fall back to Row 4 headers for anything still missing
+        for header_name, col_idx in self.headers.items():
+            if header_name not in columns:
+                columns[header_name] = col_idx
+
+        return columns
 
     def _extract_field_definitions(self) -> Dict[str, Dict]:
         """Extract field definitions from Data Definitions sheet"""
@@ -231,22 +284,22 @@ class CLRParser:
         """
         listings = []
         
-        # Get column indices
-        col_sku = self.headers.get('SKU', 3)
-        col_status = self.headers.get('Status', 1)
-        col_title = self.headers.get('Title', 2)
-        col_product_type = self.headers.get('Product Type', 4)
-        col_item_type = self.headers.get('Item Type Keyword', 13)
-        col_brand = self.headers.get('Brand', 10)
-        col_parentage = self.headers.get('Parentage', 6)
-        col_parent_sku = self.headers.get('Parent SKU', 7)
-        
-        # Bullet point columns (typically around columns 43-47)
+        # Get column indices via resolved column map (Row 5 field IDs, always English)
+        col_sku = self.columns.get('SKU', 3)
+        col_status = self.columns.get('Status', 1)
+        col_title = self.columns.get('Title', 2)
+        col_product_type = self.columns.get('Product Type', 4)
+        col_item_type = self.columns.get('Item Type Keyword', 13)
+        col_brand = self.columns.get('Brand', 10)
+        col_parentage = self.columns.get('Parentage', 6)
+        col_parent_sku = self.columns.get('Parent SKU', 7)
+
+        # Bullet point columns
         bullet_cols = []
         for i in range(1, 6):
             col_name = f'Bullet Point {i}'
-            if col_name in self.headers:
-                bullet_cols.append(self.headers[col_name])
+            if col_name in self.columns:
+                bullet_cols.append(self.columns[col_name])
         
         # Iterate through data rows
         for row_idx, row in enumerate(self.template_sheet.iter_rows(min_row=self.ROW_DATA_START), 
@@ -273,12 +326,16 @@ class CLRParser:
                 if not status or status.strip().lower() != 'active':
                     continue
 
-            # Extract all fields — index by both Row 4 headers and Row 5 field IDs
-            # so lookups work whether using display names ("SKU") or
-            # Data Definitions names ("contribution_sku#1.value")
+            # Extract all fields — index by:
+            # 1. Resolved logical English names from self.columns
+            # 2. Row 4 display headers (may be translated)
+            # 3. Row 5 field IDs (always English, e.g. "contribution_sku#1.value")
             all_fields = {}
+            for logical_name, col_idx in self.columns.items():
+                all_fields[logical_name] = self._get_cell_value(row, col_idx)
             for header_name, col_idx in self.headers.items():
-                all_fields[header_name] = self._get_cell_value(row, col_idx)
+                if header_name not in all_fields:
+                    all_fields[header_name] = self._get_cell_value(row, col_idx)
             for field_id, col_idx in self.field_ids.items():
                 if field_id not in all_fields:
                     all_fields[field_id] = self._get_cell_value(row, col_idx)
