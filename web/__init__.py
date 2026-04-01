@@ -20,11 +20,13 @@ def create_app(config_class=Config):
     from .routes.history import history_bp
     from .routes.api import api_bp
     from .routes.payment import payment_bp
+    from .routes.dashboard import dashboard_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(scan_bp, url_prefix='/scan')
     app.register_blueprint(history_bp, url_prefix='/history')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(payment_bp, url_prefix='/payment')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 
     return app

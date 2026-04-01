@@ -252,6 +252,49 @@ def send_payment_notification(scan_id, customer_email, access_token=None):
     current_app.logger.info(f'[notify] Admin notification sent, status={response.status_code}')
 
 
+def send_magic_link_email(to_email, verify_url):
+    """Send a magic-link login email via SendGrid."""
+    api_key = current_app.config.get('SENDGRID_API_KEY', '')
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL', '')
+
+    if not api_key or not from_email:
+        raise ValueError('SendGrid not configured — cannot send magic link.')
+
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail, Email, To, Content
+
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">
+        <h2 style="color: #111; font-size: 1.4rem; margin-bottom: 0.5rem;">Your Login Link</h2>
+        <p style="color: #555; font-size: 0.95rem; line-height: 1.6;">
+            Click the button below to access your Catalog Auditor reports. This link expires in 15 minutes.
+        </p>
+        <p style="margin: 1.5rem 0;">
+            <a href="{verify_url}"
+               style="display: inline-block; background: #1B75BB; color: #fff; text-decoration: none;
+                      padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem;">
+                View My Reports
+            </a>
+        </p>
+        <p style="color: #888; font-size: 0.8rem; line-height: 1.5;">
+            If you didn't request this link, you can safely ignore this email.<br>
+            Catalog Auditor by Online Seller Solutions
+        </p>
+    </div>
+    """
+
+    message = Mail(
+        from_email=Email(from_email, 'Catalog Auditor'),
+        to_emails=To(to_email),
+        subject='Your Catalog Auditor Login Link',
+        html_content=Content('text/html', html_content),
+    )
+
+    sg = SendGridAPIClient(api_key)
+    response = sg.send(message)
+    current_app.logger.info(f'[magic-link] Sent to {to_email}, status={response.status_code}')
+
+
 def verify_webhook_signature(payload, sig_header):
     """Verify the Stripe webhook signature. Returns the event or raises an error."""
     stripe.api_key = current_app.config['STRIPE_SECRET_KEY']

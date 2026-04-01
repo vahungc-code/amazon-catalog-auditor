@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}My Reports — Dashboard{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-800" style="font-size: 1.5rem; margin-bottom: 0.2rem;">My Reports</h2>
+        <p class="text-muted-custom mb-0" style="font-size: 0.85rem;">
+            <i class="bi bi-person-circle"></i> {{ email }}
+            &nbsp;&middot;&nbsp;
+            <a href="{{ url_for('dashboard.logout') }}" style="color: var(--text-dim); text-decoration: none; font-size: 0.8rem;">
+                <i class="bi bi-box-arrow-right"></i> Log out
+            </a>
+        </p>
+    </div>
+    <a href="{{ url_for('main.index') }}" class="btn-accent">
+        <i class="bi bi-plus-circle"></i> New Scan
+    </a>
+</div>
+
+{% if scans %}
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card-dark text-center" style="padding: 1.2rem;">
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);">{{ scans | length }}</div>
+            <div class="text-muted-custom" style="font-size: 0.8rem;">Total Reports</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-dark text-center" style="padding: 1.2rem;">
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--success);">
+                {{ scans | selectattr('payment_status', 'equalto', 'paid') | list | length }}
+            </div>
+            <div class="text-muted-custom" style="font-size: 0.8rem;">Unlocked Reports</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-dark text-center" style="padding: 1.2rem;">
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--accent);">
+                {{ scans | sum(attribute='total_listings') }}
+            </div>
+            <div class="text-muted-custom" style="font-size: 0.8rem;">Total Listings Audited</div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports table -->
+<div class="card-dark">
+    <div style="overflow-x: auto;">
+        <table class="table-dark-custom">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Date</th>
+                    <th class="text-end">Listings</th>
+                    <th class="text-end">Issues</th>
+                    <th class="text-end">Affected SKUs</th>
+                    <th class="text-center">Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scan in scans %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ scan.filename }}
+                        </div>
+                    </td>
+                    <td><small class="text-dim">{{ scan.created_at }}</small></td>
+                    <td class="text-end">{{ scan.total_listings }}</td>
+                    <td class="text-end">
+                        {% if scan.total_issues > 0 %}
+                            <span class="badge-severity badge-warning">{{ scan.total_issues }}</span>
+                        {% else %}
+                            <span class="badge-severity badge-success">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">{{ scan.total_affected }}</td>
+                    <td class="text-center">
+                        {% if scan.payment_status == 'paid' %}
+                            <span class="badge-severity badge-success" style="font-size: 0.7rem;">
+                                <i class="bi bi-check-circle"></i> Unlocked
+                            </span>
+                        {% else %}
+                            <span class="badge-severity badge-info" style="font-size: 0.7rem; opacity: 0.6;">
+                                Free
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex gap-xs justify-content-end flex-wrap">
+                            {% if scan.access_token %}
+                                <a href="{{ url_for('scan.view_results_by_token', token=scan.access_token) }}" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('scan.view_results', scan_id=scan.id) }}" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            {% endif %}
+                            {% if scan.payment_status == 'paid' %}
+                                <a href="{{ url_for('api.export_csv', scan_id=scan.id) }}" class="btn-ghost" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                    <i class="bi bi-download"></i> CSV
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty state -->
+<div class="text-center py-5">
+    <i class="bi bi-inbox" style="font-size: 4rem; color: var(--text-dim);"></i>
+    <p class="mt-3 text-muted-custom">No reports found for {{ email }}.</p>
+    <p class="text-muted-custom" style="font-size: 0.85rem;">
+        Reports appear here after you upload a CLR file and complete checkout.
+    </p>
+    <a href="{{ url_for('main.index') }}" class="btn-accent mt-2">
+        <i class="bi bi-cloud-arrow-up"></i> Upload a CLR File
+    </a>
+</div>
+{% endif %}
+{% endblock %}

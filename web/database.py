@@ -36,8 +36,18 @@ CREATE TABLE IF NOT EXISTS scan_results (
     FOREIGN KEY (scan_id) REFERENCES scans(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS magic_tokens (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    email       TEXT NOT NULL,
+    token       TEXT NOT NULL UNIQUE,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at  TIMESTAMP NOT NULL,
+    used        INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_scan_results_scan_id ON scan_results(scan_id);
 CREATE INDEX IF NOT EXISTS idx_scans_created_at ON scans(created_at);
+CREATE INDEX IF NOT EXISTS idx_magic_tokens_token ON magic_tokens(token);
 """
 
 MIGRATIONS = [

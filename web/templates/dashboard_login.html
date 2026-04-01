@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}My Reports — Login{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+    <div class="card-dark" style="max-width: 420px; width: 100%; padding: 2.5rem;">
+        <div class="text-center mb-4">
+            <i class="bi bi-person-circle" style="font-size: 2.5rem; color: var(--accent);"></i>
+            <h2 class="fw-800 mt-2" style="font-size: 1.3rem;">Access Your Reports</h2>
+            <p class="text-muted-custom" style="font-size: 0.9rem;">
+                Enter the email you used at checkout. We'll send you a secure login link.
+            </p>
+        </div>
+
+        <form action="{{ url_for('dashboard.send_link') }}" method="POST">
+            <div class="mb-3">
+                <label for="email" class="form-label" style="font-size: 0.85rem; font-weight: 600;">Email address</label>
+                <input type="email" name="email" id="email" class="form-control"
+                       placeholder="you@example.com" required autofocus
+                       style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.65rem 0.9rem;">
+            </div>
+            <button type="submit" class="btn-accent w-100" style="padding: 0.7rem;">
+                <i class="bi bi-envelope"></i> Send Login Link
+            </button>
+        </form>
+
+        <p class="text-center mt-3" style="font-size: 0.8rem; color: var(--text-dim);">
+            No password needed. We'll email you a one-time link.
+        </p>
+    </div>
+</div>
+{% endblock %}
