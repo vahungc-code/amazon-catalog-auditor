@@ -1,4 +1,5 @@
 import json
+import uuid
 from catalog.parser import CLRParser
 from catalog.query_engine import QueryEngine
 from catalog.queries import (
@@ -91,14 +92,17 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
                 all_affected_skus.add(sku)
     total_affected = len(all_affected_skus)
 
+    access_token = str(uuid.uuid4())
+
     cursor = db.execute(
         """INSERT INTO scans
            (filename, file_hash, total_listings, total_issues,
-            total_affected, queries_run, status, headers_json, sku_names_json)
-           VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?)""",
+            total_affected, queries_run, status, headers_json, sku_names_json,
+            access_token)
+           VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?)""",
         (original_filename, file_hash, total_listings,
          total_issues, total_affected, json.dumps(queries_run),
-         headers_json, sku_names_json)
+         headers_json, sku_names_json, access_token)
     )
     scan_id = cursor.lastrowid
 

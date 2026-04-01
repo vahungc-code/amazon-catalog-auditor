@@ -93,19 +93,39 @@ def handle_checkout_completed(event_data):
     db.commit()
     current_app.logger.info(f'[webhook] Scan {scan_id} marked as paid')
 
+    # Fetch access_token for permanent report URL
+    scan_row = db.execute('SELECT access_token FROM scans WHERE id = ?', (int(scan_id),)).fetchone()
+    access_token = scan_row['access_token'] if scan_row else None
+
     # Notify admin of the new payment
     try:
-        send_payment_notification(int(scan_id), customer_email)
+        send_payment_notification(int(scan_id), customer_email, access_token=access_token)
     except Exception as e:
         current_app.logger.error(f'[webhook] Failed to send admin notification: {e}')
 
-    # Send report link email
+    # Generate CSV attachment
+    csv_content = None
+    csv_filename = None
+    try:
+        from .aggregation_service import generate_csv_content
+        result = generate_csv_content(int(scan_id))
+        if result:
+            csv_content, csv_filename = result
+            current_app.logger.info(f'[webhook] CSV generated for scan {scan_id} ({len(csv_content)} bytes)')
+    except Exception as e:
+        current_app.logger.error(f'[webhook] Failed to generate CSV for scan {scan_id}: {e}')
+
+    # Send report link email with CSV attachment
     if customer_email:
         try:
             base_url = current_app.config.get('BASE_URL', '').rstrip('/')
-            report_url = f"{base_url}/scan/{int(scan_id)}"
+            if access_token:
+                report_url = f"{base_url}/scan/report/{access_token}"
+            else:
+                report_url = f"{base_url}/scan/{int(scan_id)}"
             current_app.logger.info(f'[webhook] Sending report email to {customer_email} — {report_url}')
-            send_report_email(customer_email, int(scan_id), report_url)
+            send_report_email(customer_email, int(scan_id), report_url,
+                              csv_content=csv_content, csv_filename=csv_filename)
             current_app.logger.info(f'[webhook] Report email sent successfully to {customer_email}')
         except Exception as e:
             current_app.logger.error(f'[webhook] Failed to send report email to {customer_email}: {e}')
@@ -115,8 +135,8 @@ def handle_checkout_completed(event_data):
     return True
 
 
-def send_report_email(to_email, scan_id, report_url):
-    """Send the report link to the customer via SendGrid."""
+def send_report_email(to_email, scan_id, report_url, csv_content=None, csv_filename=None):
+    """Send the report link (and optional CSV attachment) to the customer via SendGrid."""
     api_key = current_app.config.get('SENDGRID_API_KEY', '')
     from_email = current_app.config.get('SENDGRID_FROM_EMAIL', '')
 
@@ -125,7 +145,16 @@ def send_report_email(to_email, scan_id, report_url):
         return
 
     from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail, Email, To, Content
+    from sendgrid.helpers.mail import Mail, Email, To, Content, Attachment, FileContent, FileName, FileType, Disposition
+    import base64
+
+    csv_note = ''
+    if csv_content:
+        csv_note = """
+        <p style="color: #555; font-size: 0.95rem; line-height: 1.6;">
+            We've also attached a CSV export of your results so you can work with them in Excel or Google Sheets.
+        </p>
+        """
 
     html_content = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">
@@ -133,6 +162,7 @@ def send_report_email(to_email, scan_id, report_url):
         <p style="color: #555; font-size: 0.95rem; line-height: 1.6;">
             Thanks for unlocking your catalog audit. You can access your full report anytime using the link below.
         </p>
+        {csv_note}
         <p style="margin: 1.5rem 0;">
             <a href="{report_url}"
                style="display: inline-block; background: #1B75BB; color: #fff; text-decoration: none;
@@ -154,12 +184,23 @@ def send_report_email(to_email, scan_id, report_url):
         html_content=Content('text/html', html_content),
     )
 
+    # Attach CSV if available
+    if csv_content:
+        encoded = base64.b64encode(csv_content.encode('utf-8')).decode('utf-8')
+        attachment = Attachment(
+            FileContent(encoded),
+            FileName(csv_filename or 'report_results.csv'),
+            FileType('text/csv'),
+            Disposition('attachment'),
+        )
+        message.attachment = attachment
+
     sg = SendGridAPIClient(api_key)
     response = sg.send(message)
     current_app.logger.info(f'[sendgrid] status={response.status_code} body={response.body}')
 
 
-def send_payment_notification(scan_id, customer_email):
+def send_payment_notification(scan_id, customer_email, access_token=None):
     """Send a notification email to the admin when a payment is received."""
     api_key = current_app.config.get('SENDGRID_API_KEY', '')
     from_email = current_app.config.get('SENDGRID_FROM_EMAIL', '')
@@ -175,7 +216,10 @@ def send_payment_notification(scan_id, customer_email):
     amount = current_app.config.get('STRIPE_PRICE_AMOUNT', 999)
     amount_display = f"${amount / 100:.2f}"
     base_url = current_app.config.get('BASE_URL', '').rstrip('/')
-    report_url = f"{base_url}/scan/{scan_id}"
+    if access_token:
+        report_url = f"{base_url}/scan/report/{access_token}"
+    else:
+        report_url = f"{base_url}/scan/{scan_id}"
 
     html_content = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 2rem;">

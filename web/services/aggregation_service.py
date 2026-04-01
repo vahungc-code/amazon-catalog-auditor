@@ -403,3 +403,66 @@ def column_index_to_letter(index):
         result = chr(65 + index % 26) + result
         index //= 26
     return result
+
+
+def generate_csv_content(scan_id):
+    """Generate CSV content for a scan's results.
+    Returns (csv_string, filename) or None if scan not found / not paid.
+    """
+    import csv
+    import io
+
+    db = get_db()
+    scan = db.execute('SELECT * FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    if not scan:
+        return None
+    if scan['payment_status'] != 'paid':
+        return None
+
+    headers_raw = json.loads(scan['headers_json']) if scan['headers_json'] else {}
+    if isinstance(headers_raw, dict) and 'columns' in headers_raw:
+        col_headers = headers_raw['columns']
+        field_ids = headers_raw.get('field_ids', {})
+    else:
+        col_headers = headers_raw if isinstance(headers_raw, dict) else {}
+        field_ids = {}
+
+    rows = db.execute(
+        'SELECT * FROM scan_results WHERE scan_id = ?', (scan_id,)
+    ).fetchall()
+
+    all_issues = []
+    for row in rows:
+        query_name = row['query_name']
+        meta = QUERY_METADATA.get(query_name, {})
+        issues = json.loads(row['issues_json'])
+        for issue in issues:
+            sku = issue.get('sku', '')
+            if sku == 'SUMMARY':
+                continue
+            field_name = issue.get('field', '')
+            col_idx = col_headers.get(field_name, 0) or field_ids.get(field_name, 0)
+            col_letter = column_index_to_letter(col_idx)
+            all_issues.append({
+                'severity': issue.get('severity', ''),
+                'sku': sku,
+                'query': query_name,
+                'column': col_letter,
+                'attribute': field_name,
+                'details': issue.get('details', ''),
+            })
+
+    severity_order = {'critical': 0, 'required': 0, 'warning': 1, 'info': 2}
+    all_issues.sort(key=lambda x: (x['sku'], severity_order.get(x['severity'], 9), x['query']))
+
+    si = io.StringIO()
+    fieldnames = ['severity', 'sku', 'query', 'column', 'attribute', 'details']
+    writer = csv.DictWriter(si, fieldnames=fieldnames)
+    writer.writeheader()
+    for issue in all_issues:
+        writer.writerow(issue)
+
+    safe_name = scan['filename'].rsplit('.', 1)[0] if '.' in scan['filename'] else scan['filename']
+    csv_filename = f"{safe_name}_results.csv"
+
+    return si.getvalue(), csv_filename

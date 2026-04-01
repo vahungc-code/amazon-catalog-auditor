@@ -82,6 +82,30 @@ def view_results(scan_id):
                            query_metadata=QUERY_METADATA)
 
 
+@scan_bp.route('/report/<token>')
+def view_results_by_token(token):
+    """Permanent access to a scan report via UUID token."""
+    db = get_db()
+    scan = db.execute('SELECT * FROM scans WHERE access_token = ?', (token,)).fetchone()
+    if not scan:
+        flash('Report not found.', 'error')
+        return redirect(url_for('main.index'))
+
+    results = db.execute(
+        'SELECT * FROM scan_results WHERE scan_id = ? ORDER BY total_issues DESC',
+        (scan['id'],)
+    ).fetchall()
+
+    queries_run = json.loads(scan['queries_run'])
+
+    return render_template('results.html',
+                           scan=scan,
+                           results=results,
+                           queries_run=queries_run,
+                           payment_status=scan['payment_status'],
+                           query_metadata=QUERY_METADATA)
+
+
 @scan_bp.route('/<int:scan_id>/query/<query_name>')
 def view_query_detail(scan_id, query_name):
     db = get_db()
