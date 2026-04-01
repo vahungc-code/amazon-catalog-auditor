@@ -50,12 +50,12 @@ QUERY_METADATA = {
         'example': 'e.g. title too long, contains ! $ ? _ { } ^ ¬ ¦',
         'group': 'recommended',
     },
-    'bullets-content-quality': {
-        'label': 'Bullets Content Quality',
-        'description': 'Evaluates bullet point content quality across length, specificity, and structure.',
-        'example': 'e.g. feature clarity, benefit language, specificity',
-        'group': 'insights',
-    },
+    # 'bullets-content-quality': {  # Temporarily disabled — reworking multilingual logic
+    #     'label': 'Bullets Content Quality',
+    #     'description': 'Evaluates bullet point content quality across length, specificity, and structure.',
+    #     'example': 'e.g. feature clarity, benefit language, specificity',
+    #     'group': 'insights',
+    # },
     'missing-variations': {
         'label': 'Missing Variation Relationships',
         'description': 'Identifies products that look like they should be variations but aren\'t linked. Splits reviews and misses cross-sell opportunities.',

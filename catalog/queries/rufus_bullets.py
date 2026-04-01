@@ -12,26 +12,103 @@ MIN_BULLET_LENGTH = 50
 IDEAL_MIN_BULLET_LENGTH = 100
 MAX_BULLET_LENGTH = 500
 
-# RUFUS keyword patterns
+# RUFUS keyword patterns — multilingual
+# Each list includes EN, IT, DE, ES, FR, PT, JA translations
 BENEFIT_KEYWORDS = [
+    # English
     "help", "reduce", "improve", "enhance", "protect", "support",
-    "boost", "strengthen", "promote", "relief", "solve", "prevent"
+    "boost", "strengthen", "promote", "relief", "solve", "prevent",
+    # Italian
+    "aiuta", "riduce", "migliora", "migliore", "protegge", "protezione",
+    "rafforza", "promuove", "sollievo", "risolve", "previene", "offre",
+    "garantisce", "facilita", "permette", "ideale", "perfett", "comodo",
+    "pratico", "resistente", "morbido", "sicuro", "sicurezza", "lavabile",
+    "impermeabile", "traspirante", "durevole", "leggero", "facile",
+    # German
+    "hilft", "reduziert", "verbessert", "schützt", "unterstützt",
+    "stärkt", "fördert", "lindert", "löst", "verhindert", "bietet",
+    # Spanish
+    "ayuda", "reduce", "mejora", "protege", "apoya", "fortalece",
+    "promueve", "alivio", "resuelve", "previene", "ofrece",
+    # French
+    "aide", "réduit", "améliore", "protège", "soutient", "renforce",
+    "favorise", "soulage", "résout", "empêche", "offre",
+    # Portuguese
+    "ajuda", "reduz", "melhora", "protege", "apoia", "fortalece",
+    "promove", "alívio", "resolve", "previne", "oferece",
+    # Japanese
+    "助け", "軽減", "改善", "保護", "サポート", "強化", "促進", "解決", "防止",
 ]
 
 AUDIENCE_KEYWORDS = [
+    # English
     "for", "ideal for", "perfect for", "designed for", "suitable for",
     "men", "women", "kids", "children", "adults", "teens",
-    "professional", "beginners", "athletes", "active"
+    "professional", "beginners", "athletes", "active",
+    # Italian
+    "per", "ideale per", "perfetto per", "adatto", "pensato per",
+    "uomini", "donne", "bambini", "bambine", "adulti", "ragazzi",
+    "ragazze", "professionisti", "principianti", "neonato", "neonati",
+    "bimbi", "bimbe", "maschietti", "femminucce", "unisex", "famiglia",
+    # German
+    "für", "ideal für", "perfekt für", "geeignet für", "konzipiert für",
+    "männer", "frauen", "kinder", "erwachsene", "jugendliche", "anfänger",
+    # Spanish
+    "para", "ideal para", "perfecto para", "diseñado para", "adecuado para",
+    "hombres", "mujeres", "niños", "niñas", "adultos", "adolescentes",
+    # French
+    "pour", "idéal pour", "parfait pour", "conçu pour", "adapté",
+    "hommes", "femmes", "enfants", "adultes", "adolescents", "débutants",
+    # Portuguese
+    "para", "ideal para", "perfeito para", "projetado para", "adequado para",
+    "homens", "mulheres", "crianças", "adultos", "adolescentes", "iniciantes",
+    # Japanese
+    "向け", "最適", "男性", "女性", "子供", "大人", "初心者", "プロ",
 ]
 
 DIFFERENTIATOR_KEYWORDS = [
+    # English
     "only", "unique", "exclusive", "patented", "certified", "award",
-    "unlike", "compared to", "vs", "versus", "instead of", "alternative"
+    "unlike", "compared to", "vs", "versus", "instead of", "alternative",
+    # Italian
+    "unico", "unica", "esclusivo", "esclusiva", "brevettato", "certificat",
+    "premiato", "rispetto a", "a differenza", "alternativa", "originale",
+    "speciale", "innovativo", "innovativa",
+    # German
+    "einzigartig", "exklusiv", "patentiert", "zertifiziert", "preisgekrönt",
+    "im vergleich", "alternative",
+    # Spanish
+    "único", "exclusivo", "patentado", "certificado", "premiado",
+    "en comparación", "alternativa",
+    # French
+    "unique", "exclusif", "breveté", "certifié", "primé",
+    "par rapport", "alternative",
+    # Portuguese
+    "único", "exclusivo", "patenteado", "certificado", "premiado",
+    "em comparação", "alternativa",
+    # Japanese
+    "唯一", "独自", "特許", "認定", "受賞",
 ]
 
 VAGUE_MARKETING_PHRASES = [
+    # English
     "premium quality", "high quality", "best in class", "world class",
-    "industry leading", "revolutionary", "amazing", "incredible"
+    "industry leading", "revolutionary", "amazing", "incredible",
+    # Italian
+    "qualità premium", "alta qualità", "migliore della categoria",
+    "leader del settore", "rivoluzionario", "incredibile", "straordinario",
+    # German
+    "premium qualität", "höchste qualität", "branchenführend",
+    "revolutionär", "unglaublich",
+    # Spanish
+    "calidad premium", "alta calidad", "líder del sector",
+    "revolucionario", "increíble",
+    # French
+    "qualité premium", "haute qualité", "leader du secteur",
+    "révolutionnaire", "incroyable",
+    # Portuguese
+    "qualidade premium", "alta qualidade", "líder do setor",
+    "revolucionário", "incrível",
 ]
 
 

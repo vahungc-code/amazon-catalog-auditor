@@ -11,7 +11,6 @@ from .queries import (
     MissingAttributesQuery,
     MissingAnyAttributesQuery,
     TitlePolicyViolationsQuery,
-    RufusBulletsQuery,
     ProhibitedCharsQuery,
 )
 
@@ -155,7 +154,6 @@ def _register_queries(engine: QueryEngine):
     engine.register_query(MissingAttributesQuery())
     engine.register_query(MissingAnyAttributesQuery())
     engine.register_query(TitlePolicyViolationsQuery())
-    engine.register_query(RufusBulletsQuery())
     engine.register_query(ProhibitedCharsQuery())
 
 
