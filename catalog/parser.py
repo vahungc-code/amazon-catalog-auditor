@@ -208,47 +208,77 @@ class CLRParser:
 
         return columns
 
+    # Multilingual translations of Data Definitions column headers
+    DD_FIELD_NAME_HEADERS = {
+        'field name', 'nome del campo', 'feldname', 'nombre del campo',
+        'nom du champ', 'nome do campo', 'フィールド名', '字段名称', 'اسم الحقل',
+    }
+    DD_REQUIRED_HEADERS = {
+        'required?', 'obbligatorio?', 'erforderlich?', '¿obligatorio?',
+        'obligatoire ?', 'obrigatório?', '必須?', '必填?', 'مطلوب؟',
+    }
+    # Values that mean "required" across languages
+    REQUIRED_VALUES = {
+        'required', 'obbligatorio', 'erforderlich', 'obligatorio',
+        'obligatoire', 'obrigatório', '必須', '必填', 'مطلوب',
+    }
+
     def _extract_field_definitions(self) -> Dict[str, Dict]:
-        """Extract field definitions from Data Definitions sheet"""
+        """Extract field definitions from Data Definitions sheet (any language)"""
         definitions = {}
 
         dd_sheet = self._find_data_definitions_sheet()
         if dd_sheet is None:
             return definitions
 
-        # Find header row (usually row 1, but scan first 5)
+        # Find header row by looking for any known translation of "Field Name"
         header_row_idx = None
         for i in range(1, 6):
             row = dd_sheet[i]
-            if any(cell.value and 'field name' in str(cell.value).lower() for cell in row):
-                header_row_idx = i
+            for cell in row:
+                if cell.value and str(cell.value).strip().lower() in self.DD_FIELD_NAME_HEADERS:
+                    header_row_idx = i
+                    break
+            if header_row_idx:
                 break
 
         if not header_row_idx:
             return definitions
 
-        # Extract headers
+        # Extract headers and resolve "Field Name" and "Required?" columns
         dd_headers = {}
         for idx, cell in enumerate(dd_sheet[header_row_idx], start=1):
             if cell.value:
                 dd_headers[str(cell.value).strip().lower()] = idx
 
+        # Find the field name column (any language)
+        field_name_idx = None
+        for key in self.DD_FIELD_NAME_HEADERS:
+            if key in dd_headers:
+                field_name_idx = dd_headers[key]
+                break
+
+        # Find the required column (any language)
+        required_idx = None
+        for key in self.DD_REQUIRED_HEADERS:
+            if key in dd_headers:
+                required_idx = dd_headers[key]
+                break
+
+        if not field_name_idx:
+            return definitions
+
         # Extract definitions
         for row in dd_sheet.iter_rows(min_row=header_row_idx + 1):
-            field_name_idx = dd_headers.get('field name')
-            required_idx = dd_headers.get('required?')
-
-            if not field_name_idx:
-                continue
-
             field_name = row[field_name_idx - 1].value
             if not field_name:
                 continue
 
             required = row[required_idx - 1].value if required_idx else None
+            required_lower = str(required).strip().lower() if required else ''
 
             definitions[str(field_name).strip()] = {
-                'required': str(required).strip().lower() if required else '',
+                'required': 'required' if required_lower in self.REQUIRED_VALUES else required_lower,
                 'field_name': str(field_name).strip()
             }
 
