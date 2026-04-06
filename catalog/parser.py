@@ -270,11 +270,13 @@ class CLRParser:
 
         # Extract definitions
         for row in dd_sheet.iter_rows(min_row=header_row_idx + 1):
+            if len(row) < field_name_idx:
+                continue
             field_name = row[field_name_idx - 1].value
             if not field_name:
                 continue
 
-            required = row[required_idx - 1].value if required_idx else None
+            required = row[required_idx - 1].value if required_idx and len(row) >= required_idx else None
             required_lower = str(required).strip().lower() if required else ''
 
             definitions[str(field_name).strip()] = {
