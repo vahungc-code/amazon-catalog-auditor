@@ -12,20 +12,13 @@
         <p class="hero-sub">Upload your Amazon Category Listing Report. Get an instant health audit of your entire catalog.</p>
         <p class="hero-privacy"><i class="bi bi-lock"></i> Your file is analyzed locally and never stored.</p>
 
-        <form action="{{ url_for('main.upload_file') }}" method="POST" enctype="multipart/form-data" id="upload-form" class="hero-upload-form">
-            <input type="file" name="clr_file" id="clr-file" class="d-none" accept=".xlsx,.xlsm">
-            <div id="file-info" class="d-none mb-2">
-                <span class="badge-severity badge-info" id="file-name" style="font-size: 0.8rem;"></span>
-            </div>
+        <div class="hero-upload-form" id="upload-form">
             <div class="hero-upload-btns">
-                <label for="clr-file" class="btn-accent btn-lg hero-upload-label" id="upload-btn">
-                    <i class="bi bi-cloud-arrow-up"></i> Upload Your CLR File
-                </label>
-                <button type="submit" class="btn-accent btn-lg d-none" id="submit-btn" disabled>
-                    <i class="bi bi-arrow-right-circle"></i> Upload and Continue
-                </button>
+                <a href="{{ url_for('main.get_started') }}" class="btn-accent btn-lg hero-upload-label">
+                    <i class="bi bi-cloud-arrow-up"></i> Start Your Free Audit
+                </a>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Right: demo screenshots -->
@@ -199,13 +192,9 @@
         <h2 class="lp-h2">Ready to see what's<br><em>holding you back?</em></h2>
         <p class="lp-lead" style="margin: 0 auto 2rem; max-width: 460px;">Upload your Category Listing Report and get your catalog health score in minutes. It's completely free.</p>
         <div class="cta-buttons">
-            <a href="#upload-form" class="btn-accent btn-lg"><i class="bi bi-arrow-up-circle"></i> Free Catalog Audit</a>
+            <a href="{{ url_for('main.get_started') }}" class="btn-accent btn-lg"><i class="bi bi-arrow-up-circle"></i> Free Catalog Audit</a>
             <a href="https://link.onlinesellersolutions.com/widget/booking/fpP0m7doqOMdYjOBrJi7" target="_blank" class="btn-outline-accent btn-lg"><i class="bi bi-calendar-check"></i> Book a Consultation</a>
         </div>
     </div>
 </section>
-{% endblock %}
-
-{% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 {% endblock %}

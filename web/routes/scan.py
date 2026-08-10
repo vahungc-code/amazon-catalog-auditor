@@ -49,7 +49,8 @@ def run_scan(upload_id):
             filepath=upload_meta['filepath'],
             original_filename=upload_meta['original_filename'],
             file_hash=upload_meta['file_hash'],
-            selected_queries=None if run_all else selected_queries
+            selected_queries=None if run_all else selected_queries,
+            profile=upload_meta.get('profile'),
         )
     except Exception as e:
         flash(f'Scan failed: {e}', 'error')

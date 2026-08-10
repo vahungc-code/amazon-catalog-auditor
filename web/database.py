@@ -20,7 +20,13 @@ CREATE TABLE IF NOT EXISTS scans (
     customer_email  TEXT,
     headers_json    TEXT NOT NULL DEFAULT '{}',
     sku_names_json  TEXT NOT NULL DEFAULT '{}',
-    access_token    TEXT
+    access_token    TEXT,
+    lead_full_name  TEXT,
+    lead_country    TEXT,
+    lead_role       TEXT,
+    lead_category   TEXT,
+    lead_marketplaces TEXT,
+    lead_revenue    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS scan_results (
@@ -58,6 +64,12 @@ MIGRATIONS = [
     "ALTER TABLE scans ADD COLUMN headers_json TEXT NOT NULL DEFAULT '{}'",
     "ALTER TABLE scans ADD COLUMN sku_names_json TEXT NOT NULL DEFAULT '{}'",
     "ALTER TABLE scans ADD COLUMN access_token TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_full_name TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_country TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_role TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_category TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_marketplaces TEXT",
+    "ALTER TABLE scans ADD COLUMN lead_revenue TEXT",
 ]
 
 

@@ -26,3 +26,11 @@ class Config:
 
     # Admin notification email (receives payment alerts)
     NOTIFICATION_EMAIL = os.environ.get('NOTIFICATION_EMAIL', '')
+
+    # Supabase — durable storage for form leads (see web/services/leads_service.py).
+    # When both are set, each completed audit's lead is copied to Supabase so the
+    # team can export it (survives Railway redeploys). If unset, lead capture is
+    # simply skipped and the app behaves exactly as before.
+    SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+    SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+    SUPABASE_LEADS_TABLE = os.environ.get('SUPABASE_LEADS_TABLE', 'leads')

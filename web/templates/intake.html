@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Start Your Free Catalog Audit{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <span class="lp-eyebrow"><i class="bi bi-clipboard-check"></i> Before We Begin</span>
+            <h2 class="fw-800" style="font-size: 1.6rem;">Tell us a bit about your business</h2>
+            <p class="text-muted-custom" style="font-size: 0.9rem;">
+                This helps us tailor your audit. Then upload your Category Listing Report to run it.
+                <span class="d-block mt-1"><i class="bi bi-lock"></i> Your file is analyzed securely and never shared.</span>
+            </p>
+        </div>
+
+        <form action="{{ url_for('main.upload_file') }}" method="POST" enctype="multipart/form-data" id="intake-form" novalidate>
+
+            <!-- Contact -->
+            <div class="card-dark p-4 mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="full_name" class="form-label text-muted-custom" style="font-size: 0.85rem; font-weight: 600;">Full Name <span class="text-accent">*</span></label>
+                        <input type="text" class="form-control-dark w-100" id="full_name" name="full_name"
+                               value="{{ form.full_name or '' }}" placeholder="Jane Smith" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label text-muted-custom" style="font-size: 0.85rem; font-weight: 600;">Email <span class="text-accent">*</span></label>
+                        <input type="email" class="form-control-dark w-100" id="email" name="email"
+                               value="{{ form.email or '' }}" placeholder="jane@brand.com" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="country" class="form-label text-muted-custom" style="font-size: 0.85rem; font-weight: 600;">Country <span class="text-accent">*</span></label>
+                        <input type="text" class="form-control-dark w-100" id="country" name="country"
+                               value="{{ form.country or '' }}" placeholder="United States" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role -->
+            <div class="card-dark p-4 mb-4">
+                <div class="query-group-title mb-3">Role <span class="text-accent">*</span></div>
+                <div class="d-flex flex-wrap gap-md">
+                    {% for role in roles %}
+                    <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                        <input class="form-check-input" type="radio" name="role" value="{{ role }}"
+                               {{ 'checked' if form.role == role else '' }}>
+                        <span class="text-muted-custom" style="font-size: 0.85rem;">{{ role }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Category -->
+            <div class="card-dark p-4 mb-4">
+                <label for="category" class="query-group-title mb-3 d-block">What's your main selling category? <span class="text-accent">*</span></label>
+                <select class="form-select-dark w-100" id="category" name="category" required>
+                    <option value="" {{ 'selected' if not form.category else '' }} disabled>Select a category…</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if form.category == cat else '' }}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Marketplaces -->
+            <div class="card-dark p-4 mb-4">
+                <div class="query-group-title mb-1">Which Amazon marketplace(s) do you sell in? <span class="text-accent">*</span></div>
+                <p class="text-dim mb-3" style="font-size: 0.78rem;">Select all that apply.</p>
+                <div class="row g-2">
+                    {% for mp in marketplaces %}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                            <input class="form-check-input" type="checkbox" name="marketplaces" value="{{ mp }}"
+                                   {{ 'checked' if form.marketplaces and mp in form.marketplaces else '' }}>
+                            <span class="text-muted-custom" style="font-size: 0.85rem;">{{ mp }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Revenue -->
+            <div class="card-dark p-4 mb-4">
+                <label for="revenue" class="query-group-title mb-3 d-block">What is your approximate annual Amazon revenue? <span class="text-accent">*</span></label>
+                <select class="form-select-dark w-100" id="revenue" name="revenue" required>
+                    <option value="" {{ 'selected' if not form.revenue else '' }} disabled>Select a range…</option>
+                    {% for band in revenue_bands %}
+                    <option value="{{ band }}" {{ 'selected' if form.revenue == band else '' }}>{{ band }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- File upload -->
+            <div class="card-dark p-4 mb-4">
+                <div class="query-group-title mb-1">Upload your Category Listing Report <span class="text-accent">*</span></div>
+                <p class="text-dim mb-3" style="font-size: 0.78rem;">Accepted formats: .xlsx, .xlsm</p>
+                <input type="file" name="clr_file" id="clr-file" class="d-none" accept=".xlsx,.xlsm" required>
+                <div class="d-flex align-items-center flex-wrap gap-md">
+                    <label for="clr-file" class="btn-outline-accent" id="upload-btn" style="cursor: pointer;">
+                        <i class="bi bi-cloud-arrow-up"></i> Choose File
+                    </label>
+                    <span class="badge-severity badge-info d-none" id="file-name" style="font-size: 0.8rem;"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-accent btn-lg w-100">
+                <i class="bi bi-arrow-right-circle"></i> Continue to Audit Checks
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        const fileInput = document.getElementById('clr-file');
+        const fileName = document.getElementById('file-name');
+        const uploadBtn = document.getElementById('upload-btn');
+        if (!fileInput) return;
+
+        fileInput.addEventListener('change', function () {
+            if (!fileInput.files.length) return;
+            const file = fileInput.files[0];
+            fileName.textContent = file.name + ' (' + formatSize(file.size) + ')';
+            fileName.classList.remove('d-none');
+            uploadBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Change File';
+        });
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+    })();
+</script>
+{% endblock %}

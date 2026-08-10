@@ -34,7 +34,8 @@ def parse_clr_file(filepath):
     return parser, listings
 
 
-def execute_scan(filepath, original_filename, file_hash, selected_queries=None, include_fbm_duplicates=False):
+def execute_scan(filepath, original_filename, file_hash, selected_queries=None,
+                 include_fbm_duplicates=False, profile=None):
     """Parse file, run queries, persist results to DB. Returns scan_id."""
     parser = CLRParser(filepath)
     engine = QueryEngine(parser, include_fbm_duplicates=include_fbm_duplicates)
@@ -94,15 +95,25 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
 
     access_token = str(uuid.uuid4())
 
+    profile = profile or {}
+    marketplaces = profile.get('marketplaces') or []
+    if isinstance(marketplaces, (list, tuple)):
+        marketplaces = ', '.join(marketplaces)
+
     cursor = db.execute(
         """INSERT INTO scans
            (filename, file_hash, total_listings, total_issues,
             total_affected, queries_run, status, headers_json, sku_names_json,
-            access_token)
-           VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?)""",
+            access_token, customer_email, lead_full_name, lead_country,
+            lead_role, lead_category, lead_marketplaces, lead_revenue)
+           VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (original_filename, file_hash, total_listings,
          total_issues, total_affected, json.dumps(queries_run),
-         headers_json, sku_names_json, access_token)
+         headers_json, sku_names_json, access_token,
+         profile.get('email') or None, profile.get('full_name') or None,
+         profile.get('country') or None, profile.get('role') or None,
+         profile.get('category') or None, marketplaces or None,
+         profile.get('revenue') or None)
     )
     scan_id = cursor.lastrowid
 
@@ -119,4 +130,10 @@ def execute_scan(filepath, original_filename, file_hash, selected_queries=None, 
         )
 
     db.commit()
+
+    # Copy the lead to Supabase for durable, team-accessible storage. This is
+    # best-effort and fully isolated — record_lead never raises.
+    from .leads_service import record_lead
+    record_lead(profile, scan_id=scan_id, filename=original_filename)
+
     return scan_id
