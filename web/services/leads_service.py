@@ -21,6 +21,22 @@ from flask import current_app
 _client = "uninitialised"
 
 
+def _normalize_url(url):
+    """Reduce whatever the user pasted to the bare project origin.
+
+    The Supabase client expects `https://<ref>.supabase.co` with no trailing
+    slash and no path. A pasted value with a trailing slash or a `/rest/v1`
+    suffix causes PostgREST error PGRST125 ("Invalid path specified in request
+    URL"), so we strip everything after the host defensively.
+    """
+    from urllib.parse import urlparse
+    parsed = urlparse(url.strip())
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    # No scheme (e.g. "abc.supabase.co/rest/v1") — keep just the host segment.
+    return 'https://' + url.strip().lstrip('/').split('/')[0]
+
+
 def _get_client():
     global _client
     if _client != "uninitialised":
@@ -35,10 +51,12 @@ def _get_client():
         _client = None
         return None
 
+    url = _normalize_url(url)
+
     try:
         from supabase import create_client
         _client = create_client(url, key)
-        current_app.logger.info('[leads] Supabase client initialised.')
+        current_app.logger.info(f'[leads] Supabase client initialised for {url}.')
     except Exception as e:
         current_app.logger.error(f'[leads] Could not initialise Supabase client: {e}')
         _client = None
