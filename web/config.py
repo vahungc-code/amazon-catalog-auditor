@@ -34,3 +34,10 @@ class Config:
     SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
     SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
     SUPABASE_LEADS_TABLE = os.environ.get('SUPABASE_LEADS_TABLE', 'leads')
+
+    # Cloudflare Turnstile — anti-spam CAPTCHA on the intake form
+    # (see web/services/captcha_service.py). When both are set, the widget is
+    # shown and submissions are verified server-side. If unset, the form works
+    # normally with no CAPTCHA.
+    TURNSTILE_SITE_KEY = os.environ.get('TURNSTILE_SITE_KEY', '')
+    TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')

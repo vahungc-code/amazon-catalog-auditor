@@ -5,6 +5,7 @@ import hashlib
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 
 from ..intake_options import ROLES, CATEGORIES, MARKETPLACES, REVENUE_BANDS
+from ..services import captcha_service
 
 main_bp = Blueprint('main', __name__)
 
@@ -29,18 +30,26 @@ def index():
     return render_template('index.html')
 
 
-@main_bp.route('/get-started')
-def get_started():
-    """Lead-intake form. Collects seller profile, then the CLR file, and
-    submits both together to /upload."""
+def _render_intake(form):
+    """Render the intake form with all shared context (option lists + the
+    Turnstile site key). Used both for the initial GET and for re-rendering
+    after a validation error."""
     return render_template(
         'intake.html',
         roles=ROLES,
         categories=CATEGORIES,
         marketplaces=MARKETPLACES,
         revenue_bands=REVENUE_BANDS,
-        form={},
+        turnstile_site_key=current_app.config.get('TURNSTILE_SITE_KEY', ''),
+        form=form,
     )
+
+
+@main_bp.route('/get-started')
+def get_started():
+    """Lead-intake form. Collects seller profile, then the CLR file, and
+    submits both together to /upload."""
+    return _render_intake({})
 
 
 def _parse_profile(form):
@@ -126,18 +135,15 @@ def upload_file():
     elif not allowed_file(file.filename):
         errors.append('Only .xlsx and .xlsm files are supported.')
 
+    # Anti-spam: verify the Turnstile token (no-op if CAPTCHA isn't configured).
+    if not captcha_service.verify(request.form.get('cf-turnstile-response')):
+        errors.append('CAPTCHA verification failed. Please try again.')
+
     if errors:
         for err in errors:
             flash(err, 'error')
         # Re-render the form with the values the user already entered.
-        return render_template(
-            'intake.html',
-            roles=ROLES,
-            categories=CATEGORIES,
-            marketplaces=MARKETPLACES,
-            revenue_bands=REVENUE_BANDS,
-            form=profile,
-        ), 400
+        return _render_intake(profile), 400
 
     upload_id = str(uuid.uuid4())
     ext = file.filename.rsplit('.', 1)[1].lower()
