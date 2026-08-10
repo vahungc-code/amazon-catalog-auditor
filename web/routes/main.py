@@ -4,7 +4,7 @@ import uuid
 import hashlib
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 
-from ..intake_options import ROLES, CATEGORIES, MARKETPLACES, REVENUE_BANDS
+from ..intake_options import ROLES, CATEGORIES, MARKETPLACES, REVENUE_BANDS, COUNTRIES
 from ..services import captcha_service
 
 main_bp = Blueprint('main', __name__)
@@ -40,6 +40,7 @@ def _render_intake(form):
         categories=CATEGORIES,
         marketplaces=MARKETPLACES,
         revenue_bands=REVENUE_BANDS,
+        countries=COUNTRIES,
         turnstile_site_key=current_app.config.get('TURNSTILE_SITE_KEY', ''),
         form=form,
     )
@@ -71,8 +72,8 @@ def _parse_profile(form):
         errors.append('Please enter your full name.')
     if not EMAIL_RE.match(email):
         errors.append('Please enter a valid email address.')
-    if not country:
-        errors.append('Please enter your country.')
+    if country not in COUNTRIES:
+        errors.append('Please select your country.')
     if role not in ROLES:
         errors.append('Please select your role.')
     if category not in CATEGORIES:
@@ -153,12 +154,18 @@ def upload_file():
 
     file_hash = compute_sha256(filepath)
 
-    session['upload'] = {
-        'upload_id': upload_id,
-        'original_filename': file.filename,
-        'filepath': filepath,
-        'file_hash': file_hash,
-        'profile': profile,
-    }
+    # Run the full audit (all queries) immediately and go straight to results.
+    from ..services.scan_service import execute_scan
+    try:
+        scan_id = execute_scan(
+            filepath=filepath,
+            original_filename=file.filename,
+            file_hash=file_hash,
+            selected_queries=None,  # None = run every query
+            profile=profile,
+        )
+    except Exception as e:
+        flash(f'We could not read that file: {e}', 'error')
+        return _render_intake(profile), 400
 
-    return redirect(url_for('scan.scan_options', upload_id=upload_id))
+    return redirect(url_for('scan.view_results', scan_id=scan_id))

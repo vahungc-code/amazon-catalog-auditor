@@ -31,8 +31,12 @@
                     </div>
                     <div class="col-md-6">
                         <label for="country" class="form-label text-muted-custom" style="font-size: 0.85rem; font-weight: 600;">Country <span class="text-accent">*</span></label>
-                        <input type="text" class="form-control-dark w-100" id="country" name="country"
-                               value="{{ form.country or '' }}" placeholder="United States" required>
+                        <select class="form-select-dark w-100" id="country" name="country" required>
+                            <option value="" {{ 'selected' if not form.country else '' }} disabled>Select a country…</option>
+                            {% for c in countries %}
+                            <option value="{{ c }}" {{ 'selected' if form.country == c else '' }}>{{ c }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
             </div>

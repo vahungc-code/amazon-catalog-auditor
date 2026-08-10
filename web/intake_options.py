@@ -59,6 +59,29 @@ MARKETPLACES = [
     "Other",
 ]
 
+COUNTRIES = [
+    "United States", "Canada", "Mexico", "United Kingdom", "Germany", "France",
+    "Italy", "Spain", "Netherlands", "Sweden", "Poland", "Belgium", "Ireland",
+    "Portugal", "Austria", "Switzerland", "Denmark", "Norway", "Finland",
+    "Japan", "Australia", "New Zealand", "India", "Singapore", "United Arab Emirates",
+    "Saudi Arabia", "Egypt", "Brazil", "South Africa", "Turkey", "China",
+    "Hong Kong", "South Korea", "Taiwan", "Israel", "Argentina", "Chile",
+    "Colombia", "Czech Republic", "Greece", "Hungary", "Indonesia", "Malaysia",
+    "Nigeria", "Pakistan", "Philippines", "Romania", "Russia", "Thailand",
+    "Ukraine", "Vietnam",
+    "Afghanistan", "Albania", "Algeria", "Angola", "Armenia", "Azerbaijan",
+    "Bahrain", "Bangladesh", "Belarus", "Bolivia", "Bosnia and Herzegovina",
+    "Bulgaria", "Cambodia", "Cameroon", "Costa Rica", "Croatia", "Cyprus",
+    "Dominican Republic", "Ecuador", "El Salvador", "Estonia", "Ethiopia",
+    "Georgia", "Ghana", "Guatemala", "Honduras", "Iceland", "Iraq", "Jamaica",
+    "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Latvia", "Lebanon", "Lithuania",
+    "Luxembourg", "Malta", "Mauritius", "Moldova", "Montenegro", "Morocco",
+    "Nepal", "Oman", "Panama", "Paraguay", "Peru", "Qatar", "Rwanda", "Senegal",
+    "Serbia", "Slovakia", "Slovenia", "Sri Lanka", "Tanzania", "Tunisia",
+    "Uganda", "Uruguay", "Uzbekistan", "Venezuela", "Zambia", "Zimbabwe",
+    "Other",
+]
+
 REVENUE_BANDS = [
     "0 - $300k",
     "$300k - $1M",
